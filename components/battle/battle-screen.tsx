@@ -45,7 +45,7 @@ export function BattleScreen() {
   const [currentMove, setCurrentMove] = useState<any>(null);
 
   useEffect(() => {
-    if (!currentCharacter) {
+    if (!currentCharacter || !walletAddress) {
       router.push("/");
       return;
     }
@@ -54,7 +54,12 @@ export function BattleScreen() {
       try {
         // Fetch a scaled enemy based on character level
         const response = await fetch(
-          `/api/enemy/get?level=${currentCharacter.level}`
+          `/api/enemy/get?level=${currentCharacter.level}`,
+          {
+            headers: {
+              'x-wallet-address': walletAddress
+            }
+          }
         );
         if (!response.ok) throw new Error("Failed to fetch enemy");
 
@@ -82,7 +87,7 @@ export function BattleScreen() {
     };
 
     initializeBattle();
-  }, [currentCharacter, router, drawCard, startBattle]);
+  }, [currentCharacter, router, drawCard, startBattle, walletAddress]);
 
   const determineEnemyIntent = () => {
     if (!currentEnemy) return;
@@ -218,7 +223,7 @@ export function BattleScreen() {
   };
 
   const handleVictory = async () => {
-    if (!currentCharacter || !currentEnemy) return;
+    if (!currentCharacter || !currentEnemy || !walletAddress) return;
 
     try {
       const goldReward =
@@ -231,7 +236,7 @@ export function BattleScreen() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-wallet-address": walletAddress || "",
+          "x-wallet-address": walletAddress
         },
         body: JSON.stringify({
           characterId: currentCharacter.id,
@@ -256,12 +261,14 @@ export function BattleScreen() {
   };
 
   const handleDefeat = async () => {
+    if (!walletAddress) return;
+    
     try {
       // Block the user from further battles
       await fetch("/api/character/block", {
         method: "POST",
         headers: {
-          "x-wallet-address": walletAddress || "",
+          "x-wallet-address": walletAddress
         },
       });
 
