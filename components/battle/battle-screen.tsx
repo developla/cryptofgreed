@@ -26,6 +26,7 @@ export function BattleScreen() {
     playCard,
     discardHand,
     endBattle,
+    startBattle,
   } = useGameStore();
 
   const [battleState, setBattleState] = useState<BattleState>({
@@ -58,13 +59,14 @@ export function BattleScreen() {
       enemyHealth: randomEnemy.health,
     }));
 
-    // Draw initial hand
+    // Start battle and draw initial hand
+    startBattle();
     for (let i = 0; i < 5; i++) {
       drawCard();
     }
 
     determineEnemyIntent();
-  }, [currentCharacter, router, drawCard]);
+  }, [currentCharacter, router, drawCard, startBattle]);
 
   const determineEnemyIntent = () => {
     if (!currentEnemy) return;

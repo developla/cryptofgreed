@@ -1,12 +1,15 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { getAuthenticatedUser } from "@/lib/auth";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
+import { getAuthenticatedUser } from '@/lib/auth';
 
 export async function GET() {
   try {
     const user = await getAuthenticatedUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
     }
 
     // Get the user's character with their deck
@@ -24,9 +27,9 @@ export async function GET() {
 
     return NextResponse.json({ character });
   } catch (error) {
-    console.error("Failed to get character:", error);
+    console.error('Failed to get character:', error);
     return NextResponse.json(
-      { error: "Failed to get character" },
+      { error: 'Failed to get character' },
       { status: 500 }
     );
   }

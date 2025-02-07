@@ -38,7 +38,7 @@ interface Character {
   energy: number;
   maxEnergy: number;
   gold: number;
-  deck: Card[];
+  deck?: Card[];
 }
 
 interface Card {
@@ -142,12 +142,12 @@ export const useGameStore = create<GameState>()(
       setCharacter: (character) =>
         set({
           currentCharacter: character,
-          playerDeck: [...character.deck],
+          playerDeck: character.deck || [],
         }),
 
       startBattle: () => {
         const { currentCharacter } = get();
-        if (!currentCharacter) return;
+        if (!currentCharacter?.deck) return;
 
         set({
           inBattle: true,
