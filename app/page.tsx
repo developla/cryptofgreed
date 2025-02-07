@@ -1,6 +1,6 @@
-import { WalletConnect } from "@/components/wallet-connect";
-import { GameTitle } from "@/components/game-title";
-import { CharacterCreation } from "@/components/character-creation";
+import { WalletConnect } from '@/components/wallet-connect';
+import { GameTitle } from '@/components/game-title';
+import { CharacterCreation } from '@/components/character-creation';
 
 export default function Home() {
   return (

@@ -1,16 +1,52 @@
 "use client";
-import { useState } from "react";
-import { Button } from "./ui/button";
-import { Wallet } from "lucide-react";
-import { WalletType } from "@prisma/client";
-import { useGameStore } from "@/lib/store/game";
-import { connectMetaMask } from "@/lib/web3/ethereum";
-import { connectPhantom } from "@/lib/web3/solana";
-import { toast } from "sonner";
+
+import { useState, useEffect } from 'react';
+import { Button } from './ui/button';
+import { Wallet, LogOut } from 'lucide-react';
+import { WalletType } from '@prisma/client';
+import { useGameStore } from '@/lib/store/game';
+import { connectMetaMask } from '@/lib/web3/ethereum';
+import { connectPhantom } from '@/lib/web3/solana';
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 export function WalletConnect() {
   const [isConnecting, setIsConnecting] = useState(false);
-  const { connectWallet } = useGameStore();
+  const { connectWallet, disconnectWallet, isConnected, walletAddress, walletType, checkWalletConnection, setCharacter } = useGameStore();
+  const router = useRouter();
+
+  useEffect(() => {
+    checkWalletConnection();
+  }, [checkWalletConnection]);
+
+  // Fetch character when wallet is connected
+  useEffect(() => {
+    const fetchCharacter = async () => {
+      if (!isConnected || !walletAddress) return;
+
+      try {
+        const response = await fetch('/api/character/get', {
+          headers: {
+            'x-wallet-address': walletAddress
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch character');
+        }
+
+        const { character } = await response.json();
+        if (character) {
+          setCharacter(character);
+          router.push('/map');
+        }
+      } catch (error) {
+        console.error('Error fetching character:', error);
+      }
+    };
+
+    fetchCharacter();
+  }, [isConnected, walletAddress, setCharacter, router]);
 
   const handleConnect = async (type: WalletType) => {
     setIsConnecting(true);
@@ -23,35 +59,61 @@ export function WalletConnect() {
         address = await connectPhantom();
       }
 
-      console.log("Connect wallet address:", address);
-
       if (!address) {
-        throw new Error("Failed to connect wallet");
+        throw new Error('Failed to connect wallet');
       }
 
-      // Save to database
-      const response = await fetch("/api/auth/wallet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/auth/wallet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ address, type }),
       });
 
-      console.log("Wallet connection response:", response);
-
       if (!response.ok) {
-        throw new Error("Failed to authenticate wallet");
+        throw new Error('Failed to authenticate wallet');
       }
 
       const { user } = await response.json();
       connectWallet(address, type);
-      toast.success("Wallet connected successfully!");
+      toast.success('Wallet connected successfully!');
     } catch (error) {
-      console.error("Wallet connection error:", error);
-      toast.error("Failed to connect wallet. Please try again.");
+      console.error('Wallet connection error:', error);
+      toast.error('Failed to connect wallet. Please try again.');
     } finally {
       setIsConnecting(false);
     }
   };
+
+  const handleDisconnect = () => {
+    disconnectWallet();
+    toast.success('Wallet disconnected');
+    router.push('/');
+  };
+
+  if (isConnected && walletAddress) {
+    return (
+      <div className="flex flex-col items-center gap-4 mt-8">
+        <div className="bg-secondary p-4 rounded-lg">
+          <p className="text-sm text-muted-foreground">Connected Wallet</p>
+          <p className="font-mono text-sm">
+            {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {walletType === WalletType.ETHEREUM ? 'MetaMask' : 'Phantom'}
+          </p>
+        </div>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={handleDisconnect}
+          className="gap-2"
+        >
+          <LogOut className="w-4 h-4" />
+          Disconnect Wallet
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center gap-4 mt-8">

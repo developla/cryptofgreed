@@ -12,6 +12,7 @@ model User {
   walletAddress String    @unique
   walletType    WalletType
   characters    Character[]
+  blockedFromBattles Boolean @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -101,4 +102,27 @@ type Effect {
   type      String
   value     Int
   duration  Int?
+}
+
+model Enemy {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  health        Int
+  maxHealth     Int
+  level         Int
+  moves         Move[]
+  experienceReward Int
+  goldRewardMin Int
+  goldRewardMax Int
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+type Move {
+  name        String
+  description String
+  damage      Int?
+  block       Int?
+  effects     Effect[]
+  weight      Int
 }
