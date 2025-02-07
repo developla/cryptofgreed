@@ -1,4 +1,4 @@
-import { Enemy } from '@prisma/client';
+import { Enemy, Move, Effect } from '@prisma/client';
 
 export interface EnemyTemplate {
   name: string;
@@ -15,33 +15,32 @@ export interface EnemyMove {
   description: string;
   damage?: number;
   block?: number;
-  effects?: {
-    type: string;
-    value: number;
-    duration?: number;
-  }[];
+  effects?: Effect[];
   weight: number;
 }
 
 // Scale enemy stats based on level
-export function scaleEnemy(enemy: EnemyTemplate, targetLevel: number): EnemyTemplate {
+export function scaleEnemy(enemy: Enemy & { moves: Move[] }, targetLevel: number): EnemyTemplate {
   const levelDiff = targetLevel - enemy.level;
   const scalingFactor = 1 + (levelDiff * 0.2); // 20% increase per level
 
   return {
-    ...enemy,
+    name: enemy.name,
     health: Math.round(enemy.health * scalingFactor),
     maxHealth: Math.round(enemy.maxHealth * scalingFactor),
     level: targetLevel,
     experienceReward: Math.round(enemy.experienceReward * scalingFactor),
     goldReward: {
-      min: Math.round(enemy.goldReward.min * scalingFactor),
-      max: Math.round(enemy.goldReward.max * scalingFactor)
+      min: Math.round(enemy.goldRewardMin * scalingFactor),
+      max: Math.round(enemy.goldRewardMax * scalingFactor)
     },
     moves: enemy.moves.map(move => ({
-      ...move,
-      damage: move.damage ? Math.round(move.damage * scalingFactor) : undefined,
-      block: move.block ? Math.round(move.block * scalingFactor) : undefined
+      name: move.name,
+      description: move.description,
+      damage: move.damage ?? undefined,
+      block: move.block ?? undefined,
+      effects: move.effects,
+      weight: move.weight
     }))
   };
 }

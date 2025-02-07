@@ -1,6 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { CharacterClass, WalletType, CardType, Rarity } from '@prisma/client';
+import { CharacterClass, WalletType, CardType, Rarity, Effect } from '@prisma/client';
+
+declare global {
+  interface Window {
+    ethereum?: any;
+    solana?: any;
+  }
+}
 
 interface GameState {
   // Auth State
@@ -50,13 +57,7 @@ interface Card {
   energy: number;
   damage?: number;
   block?: number;
-  effects?: CardEffect[];
-}
-
-interface CardEffect {
-  type: string;
-  value: number;
-  duration?: number;
+  effects?: Effect[];
 }
 
 export const useGameStore = create<GameState>()(

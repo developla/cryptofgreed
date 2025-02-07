@@ -1,9 +1,31 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/auth';
+import { CardType, Rarity, EquipmentSlot } from '@prisma/client';
 
-// Mock shop items (in a real app, these would be in the database)
-const SHOP_ITEMS = {
+interface ShopCardItem {
+  name: string;
+  description: string;
+  type: "CARD";
+  cardType: CardType;
+  cost: number;
+  rarity: Rarity;
+  damage: number;
+}
+
+interface ShopEquipmentItem {
+  name: string;
+  description: string;
+  type: "EQUIPMENT";
+  slot: EquipmentSlot;
+  cost: number;
+  rarity: Rarity;
+  effects: Array<{ type: string; value: number }>;
+}
+
+type ShopItem = ShopCardItem | ShopEquipmentItem;
+
+const SHOP_ITEMS: Record<string, ShopItem> = {
   "1": {
     name: "Heavy Strike",
     description: "Deal 12 damage",
@@ -35,7 +57,7 @@ export async function POST(request: Request) {
     }
 
     const { characterId, itemId, type } = await request.json();
-    const item = SHOP_ITEMS[itemId as keyof typeof SHOP_ITEMS];
+    const item = SHOP_ITEMS[itemId];
     
     if (!item) {
       return NextResponse.json(
@@ -73,7 +95,7 @@ export async function POST(request: Request) {
         data: { gold: { decrement: item.cost } }
       });
 
-      if (type === 'CARD') {
+      if (item.type === 'CARD') {
         // Add card to character's deck
         await tx.card.create({
           data: {
@@ -87,7 +109,7 @@ export async function POST(request: Request) {
             effects: []
           }
         });
-      } else if (type === 'EQUIPMENT') {
+      } else {
         // Add equipment to character
         await tx.equipment.create({
           data: {

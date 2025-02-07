@@ -1,4 +1,4 @@
-import { CardEffect } from '@prisma/client';
+import { Effect } from '@prisma/client';
 
 export interface BattleState {
   playerHealth: number;
@@ -52,7 +52,7 @@ export function calculateDamage(
 }
 
 export function applyCardEffects(
-  effects: CardEffect[],
+  effects: Effect[],
   battleState: BattleState,
   isPlayer: boolean
 ): BattleState {
@@ -81,7 +81,6 @@ export function applyCardEffects(
           duration: effect.duration || 1
         });
         break;
-      // Add more effect types as needed
     }
   });
 
