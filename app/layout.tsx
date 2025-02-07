@@ -1,14 +1,14 @@
-import { Inter } from "next/font/google";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Providers } from "@/components/providers";
-import { Toaster } from "@/components/ui/sonner";
-import "./globals.css";
+import { Inter } from 'next/font/google';
+import { ThemeProvider } from '@/components/theme-provider';
+import { Providers } from '@/components/providers';
+import { Toaster } from '@/components/ui/sonner';
+import './globals.css';
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: "Project Gamify",
-  description: "A Web3-powered roguelike deck-building game",
+  title: 'Project Gamify',
+  description: 'A Web3-powered roguelike deck-building game',
 };
 
 export default function RootLayout({

@@ -9,7 +9,7 @@ export function GameTitle() {
         <Sword className="w-12 h-12 text-primary animate-pulse" />
       </div>
       <h1 className="text-4xl font-bold tracking-tight text-primary mb-2">
-        Project Gamify
+         Project Gamify
       </h1>
       <p className="text-muted-foreground">
         A Web3-powered roguelike deck-building adventure
