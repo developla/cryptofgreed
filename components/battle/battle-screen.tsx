@@ -27,7 +27,7 @@ export function BattleScreen() {
     discardHand,
     endBattle,
     startBattle,
-    walletAddress,
+    walletAddress
   } = useGameStore();
 
   const [battleState, setBattleState] = useState<BattleState>({
@@ -265,9 +265,7 @@ export function BattleScreen() {
         },
       });
 
-      toast.error(
-        "Defeat! Your character has been blocked from further battles."
-      );
+      toast.error("Defeat! Your character has been blocked from further battles.");
       endBattle();
       router.push("/map");
     } catch (error) {
@@ -309,9 +307,7 @@ export function BattleScreen() {
           <div>
             <h2 className="text-xl font-bold">{currentCharacter.name}</h2>
             <Progress
-              value={
-                (battleState.playerHealth / currentCharacter.maxHealth) * 100
-              }
+              value={(battleState.playerHealth / currentCharacter.maxHealth) * 100}
               className="w-48"
             />
             <div className="text-sm text-muted-foreground">

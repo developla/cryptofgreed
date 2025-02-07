@@ -1,37 +1,85 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '../ui/card';
-import { Button } from '../ui/button';
 import { useGameStore } from '@/lib/store/game';
-import { Sword, ShoppingBag, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import { MapNodeComponent, type MapNode } from './map-node';
 
-interface MapNode {
-  id: string;
-  type: 'BATTLE' | 'MERCHANT' | 'EVENT';
-  x: number;
-  y: number;
-  connections: string[];
+// Generate a simple branching path
+function generateMap(): MapNode[] {
+  return [
+    { 
+      id: '1', 
+      type: 'BATTLE', 
+      x: 100, 
+      y: 300, 
+      connections: ['2', '3'],
+      isAccessible: true,
+      isCompleted: false
+    },
+    { 
+      id: '2', 
+      type: 'MERCHANT', 
+      x: 300, 
+      y: 200, 
+      connections: ['4'],
+      isAccessible: false,
+      isCompleted: false
+    },
+    { 
+      id: '3', 
+      type: 'REST', 
+      x: 300, 
+      y: 400, 
+      connections: ['4'],
+      isAccessible: false,
+      isCompleted: false
+    },
+    { 
+      id: '4', 
+      type: 'EVENT', 
+      x: 500, 
+      y: 300, 
+      connections: ['5', '6'],
+      isAccessible: false,
+      isCompleted: false
+    },
+    { 
+      id: '5', 
+      type: 'MERCHANT', 
+      x: 700, 
+      y: 200, 
+      connections: ['7'],
+      isAccessible: false,
+      isCompleted: false
+    },
+    { 
+      id: '6', 
+      type: 'BATTLE', 
+      x: 700, 
+      y: 400, 
+      connections: ['7'],
+      isAccessible: false,
+      isCompleted: false
+    },
+    { 
+      id: '7', 
+      type: 'BATTLE', 
+      x: 900, 
+      y: 300, 
+      connections: [],
+      isAccessible: false,
+      isCompleted: false
+    },
+  ];
 }
-
-const MOCK_MAP: MapNode[] = [
-  { id: '1', type: 'BATTLE', x: 100, y: 100, connections: ['2', '3'] },
-  { id: '2', type: 'MERCHANT', x: 300, y: 50, connections: ['4'] },
-  { id: '3', type: 'EVENT', x: 300, y: 150, connections: ['4'] },
-  { id: '4', type: 'BATTLE', x: 500, y: 100, connections: [] },
-];
-
-const NODE_ICONS = {
-  BATTLE: Sword,
-  MERCHANT: ShoppingBag,
-  EVENT: Sparkles,
-};
 
 export function MapScreen() {
   const { currentCharacter, isConnected } = useGameStore();
   const router = useRouter();
+  const [nodes, setNodes] = useState<MapNode[]>(() => generateMap());
 
   useEffect(() => {
     if (!isConnected || !currentCharacter) {
@@ -39,11 +87,28 @@ export function MapScreen() {
     }
   }, [isConnected, currentCharacter, router]);
 
+  const updateAccessibleNodes = (currentNodes: MapNode[], completedNodeId: string) => {
+    return currentNodes.map(node => {
+      if (node.id === completedNodeId) {
+        return { ...node, isCompleted: true };
+      }
+      
+      // A node is accessible if it's connected to a completed node
+      const isNowAccessible = currentNodes
+        .some(n => n.isCompleted && n.connections.includes(node.id));
+      
+      if (isNowAccessible && !node.isAccessible) {
+        return { ...node, isAccessible: true };
+      }
+      
+      return node;
+    });
+  };
+
   const handleNodeClick = async (node: MapNode) => {
     switch (node.type) {
       case 'BATTLE':
         try {
-          // Ensure enemies are seeded before starting battle
           await fetch('/api/enemy/seed', { method: 'POST' });
           router.push('/battle');
         } catch (error) {
@@ -52,12 +117,19 @@ export function MapScreen() {
         }
         break;
       case 'MERCHANT':
-        // TODO: Implement merchant screen
+        router.push('/shop');
+        break;
+      case 'REST':
+        router.push('/rest');
         break;
       case 'EVENT':
-        // TODO: Implement event screen
+        // TODO: Implement random events
+        toast.info('Events coming soon!');
         break;
     }
+
+    // Update node accessibility after interaction
+    setNodes(prev => updateAccessibleNodes(prev, node.id));
   };
 
   if (!currentCharacter) {
@@ -79,15 +151,19 @@ export function MapScreen() {
               <p className="text-sm text-muted-foreground">Gold</p>
               <p className="font-bold">{currentCharacter.gold}</p>
             </Card>
+            <Card className="p-4">
+              <p className="text-sm text-muted-foreground">Health</p>
+              <p className="font-bold">{currentCharacter.health}/{currentCharacter.maxHealth}</p>
+            </Card>
           </div>
         </div>
 
         <div className="relative w-full h-[600px] border rounded-lg p-4">
           {/* Draw connections */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none">
-            {MOCK_MAP.map(node =>
+            {nodes.map(node =>
               node.connections.map(targetId => {
-                const target = MOCK_MAP.find(n => n.id === targetId);
+                const target = nodes.find(n => n.id === targetId);
                 if (!target) return null;
                 return (
                   <line
@@ -106,20 +182,13 @@ export function MapScreen() {
           </svg>
 
           {/* Draw nodes */}
-          {MOCK_MAP.map(node => {
-            const Icon = NODE_ICONS[node.type];
-            return (
-              <Button
-                key={node.id}
-                variant="outline"
-                className="absolute w-12 h-12 -translate-x-1/2 -translate-y-1/2 rounded-full"
-                style={{ left: node.x, top: node.y }}
-                onClick={() => handleNodeClick(node)}
-              >
-                <Icon className="w-6 h-6" />
-              </Button>
-            );
-          })}
+          {nodes.map(node => (
+            <MapNodeComponent
+              key={node.id}
+              node={node}
+              onClick={handleNodeClick}
+            />
+          ))}
         </div>
       </div>
     </div>
