@@ -10,6 +10,7 @@ import { CharacterClass } from '@prisma/client';
 import { useGameStore } from '@/lib/store/game';
 import { Shield, Wand2, Sword } from 'lucide-react';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 const CLASS_INFO = {
   [CharacterClass.WARRIOR]: {
@@ -33,6 +34,7 @@ export function CharacterCreation() {
   const [name, setName] = useState('');
   const [selectedClass, setSelectedClass] = useState<CharacterClass>(CharacterClass.WARRIOR);
   const { setCharacter, isConnected, walletAddress } = useGameStore();
+  const router = useRouter();
 
   const handleCreate = async () => {
     if (!name) return;
@@ -68,6 +70,8 @@ export function CharacterCreation() {
       const { character: createdCharacter } = await response.json();
       setCharacter(createdCharacter);
       toast.success('Character created successfully!');
+      // Redirect to the map screen after character creation
+      router.push('/map');
     } catch (error) {
       console.error('Character creation error:', error);
       toast.error('Failed to create character. Please try again.');

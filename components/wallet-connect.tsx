@@ -2,16 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
-import { Wallet } from 'lucide-react';
+import { Wallet, LogOut } from 'lucide-react';
 import { WalletType } from '@prisma/client';
 import { useGameStore } from '@/lib/store/game';
 import { connectMetaMask } from '@/lib/web3/ethereum';
 import { connectPhantom } from '@/lib/web3/solana';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 export function WalletConnect() {
   const [isConnecting, setIsConnecting] = useState(false);
-  const { connectWallet, isConnected, walletAddress, walletType, checkWalletConnection } = useGameStore();
+  const { connectWallet, disconnectWallet, isConnected, walletAddress, walletType, checkWalletConnection } = useGameStore();
+  const router = useRouter();
 
   useEffect(() => {
     checkWalletConnection();
@@ -53,6 +55,12 @@ export function WalletConnect() {
     }
   };
 
+  const handleDisconnect = () => {
+    disconnectWallet();
+    toast.success('Wallet disconnected');
+    router.push('/');
+  };
+
   if (isConnected && walletAddress) {
     return (
       <div className="flex flex-col items-center gap-4 mt-8">
@@ -65,6 +73,15 @@ export function WalletConnect() {
             {walletType === WalletType.ETHEREUM ? 'MetaMask' : 'Phantom'}
           </p>
         </div>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={handleDisconnect}
+          className="gap-2"
+        >
+          <LogOut className="w-4 h-4" />
+          Disconnect Wallet
+        </Button>
       </div>
     );
   }
