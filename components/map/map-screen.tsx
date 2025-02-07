@@ -6,6 +6,7 @@ import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { useGameStore } from '@/lib/store/game';
 import { Sword, ShoppingBag, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface MapNode {
   id: string;
@@ -38,14 +39,17 @@ export function MapScreen() {
     }
   }, [isConnected, currentCharacter, router]);
 
-  if (!currentCharacter) {
-    return null;
-  }
-
-  const handleNodeClick = (node: MapNode) => {
+  const handleNodeClick = async (node: MapNode) => {
     switch (node.type) {
       case 'BATTLE':
-        router.push('/battle');
+        try {
+          // Ensure enemies are seeded before starting battle
+          await fetch('/api/enemy/seed', { method: 'POST' });
+          router.push('/battle');
+        } catch (error) {
+          console.error('Failed to prepare battle:', error);
+          toast.error('Failed to start battle. Please try again.');
+        }
         break;
       case 'MERCHANT':
         // TODO: Implement merchant screen
@@ -55,6 +59,10 @@ export function MapScreen() {
         break;
     }
   };
+
+  if (!currentCharacter) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background/90 to-background p-8">

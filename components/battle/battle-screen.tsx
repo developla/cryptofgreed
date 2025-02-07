@@ -8,7 +8,7 @@ import { useGameStore } from "@/lib/store/game";
 import { Shield, Sword } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { ENEMY_TEMPLATES, type EnemyTemplate } from "@/lib/game/enemies";
+import { type EnemyTemplate } from "@/lib/game/enemies";
 import {
   calculateDamage,
   applyCardEffects,
@@ -27,6 +27,7 @@ export function BattleScreen() {
     discardHand,
     endBattle,
     startBattle,
+    walletAddress,
   } = useGameStore();
 
   const [battleState, setBattleState] = useState<BattleState>({
@@ -49,26 +50,38 @@ export function BattleScreen() {
       return;
     }
 
-    // Initialize battle
-    const randomEnemy =
-      Object.values(ENEMY_TEMPLATES)[
-        Math.floor(Math.random() * Object.values(ENEMY_TEMPLATES).length)
-      ];
-    setCurrentEnemy(randomEnemy);
-    setBattleState((prev) => ({
-      ...prev,
-      playerHealth: currentCharacter.health,
-      playerEnergy: currentCharacter.maxEnergy,
-      enemyHealth: randomEnemy.health,
-    }));
+    const initializeBattle = async () => {
+      try {
+        // Fetch a scaled enemy based on character level
+        const response = await fetch(
+          `/api/enemy/get?level=${currentCharacter.level}`
+        );
+        if (!response.ok) throw new Error("Failed to fetch enemy");
 
-    // Start battle and draw initial hand
-    startBattle();
-    for (let i = 0; i < 5; i++) {
-      drawCard();
-    }
+        const { enemy } = await response.json();
+        setCurrentEnemy(enemy);
+        setBattleState((prev) => ({
+          ...prev,
+          playerHealth: currentCharacter.health,
+          playerEnergy: currentCharacter.maxEnergy,
+          enemyHealth: enemy.health,
+        }));
 
-    determineEnemyIntent();
+        // Start battle and draw initial hand
+        startBattle();
+        for (let i = 0; i < 5; i++) {
+          drawCard();
+        }
+
+        determineEnemyIntent();
+      } catch (error) {
+        console.error("Failed to initialize battle:", error);
+        toast.error("Failed to start battle");
+        router.push("/map");
+      }
+    };
+
+    initializeBattle();
   }, [currentCharacter, router, drawCard, startBattle]);
 
   const determineEnemyIntent = () => {
@@ -133,7 +146,7 @@ export function BattleScreen() {
     }
 
     // Update state
-    await setBattleState(newState);
+    setBattleState(newState);
     playCard(cardIndex);
 
     // Check for victory after state update
@@ -204,18 +217,63 @@ export function BattleScreen() {
     determineEnemyIntent();
   };
 
-  const handleVictory = () => {
-    toast.success("Victory!");
-    const goldReward = Math.floor(Math.random() * 30) + 20; // Random gold between 20-50
-    toast.success(`Earned ${goldReward} gold!`);
-    endBattle();
-    router.push("/map");
+  const handleVictory = async () => {
+    if (!currentCharacter || !currentEnemy) return;
+
+    try {
+      const goldReward =
+        Math.floor(
+          Math.random() *
+            (currentEnemy.goldReward.max - currentEnemy.goldReward.min + 1)
+        ) + currentEnemy.goldReward.min;
+
+      const response = await fetch("/api/character/update", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-wallet-address": walletAddress || "",
+        },
+        body: JSON.stringify({
+          characterId: currentCharacter.id,
+          experience: currentEnemy.experienceReward,
+          gold: goldReward,
+          health: battleState.playerHealth,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update character");
+
+      toast.success("Victory!");
+      toast.success(
+        `Earned ${goldReward} gold and ${currentEnemy.experienceReward} experience!`
+      );
+      endBattle();
+      router.push("/map");
+    } catch (error) {
+      console.error("Failed to process victory:", error);
+      toast.error("Failed to update rewards");
+    }
   };
 
-  const handleDefeat = () => {
-    toast.error("Defeat!");
-    endBattle();
-    router.push("/map");
+  const handleDefeat = async () => {
+    try {
+      // Block the user from further battles
+      await fetch("/api/character/block", {
+        method: "POST",
+        headers: {
+          "x-wallet-address": walletAddress || "",
+        },
+      });
+
+      toast.error(
+        "Defeat! Your character has been blocked from further battles."
+      );
+      endBattle();
+      router.push("/map");
+    } catch (error) {
+      console.error("Failed to process defeat:", error);
+      toast.error("Failed to update character status");
+    }
   };
 
   if (!currentCharacter || !currentEnemy) {
@@ -240,7 +298,6 @@ export function BattleScreen() {
         <div className="text-sm text-muted-foreground">
           Intent: {enemyIntent}
         </div>
-        {/* Debug info */}
         <div className="text-sm text-muted-foreground mt-2">
           Enemy Health: {battleState.enemyHealth}/{currentEnemy.maxHealth}
         </div>
@@ -257,7 +314,6 @@ export function BattleScreen() {
               }
               className="w-48"
             />
-            {/* Debug info */}
             <div className="text-sm text-muted-foreground">
               Health: {battleState.playerHealth}/{currentCharacter.maxHealth}
             </div>
@@ -268,7 +324,7 @@ export function BattleScreen() {
               <span>{battleState.playerBlock}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-black">
                 {battleState.playerEnergy}
               </div>
               <span className="text-sm text-muted-foreground">Energy</span>

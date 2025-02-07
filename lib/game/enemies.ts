@@ -6,6 +6,8 @@ export interface EnemyTemplate {
   maxHealth: number;
   moves: EnemyMove[];
   level: number;
+  experienceReward: number;
+  goldReward: { min: number; max: number };
 }
 
 export interface EnemyMove {
@@ -18,7 +20,30 @@ export interface EnemyMove {
     value: number;
     duration?: number;
   }[];
-  weight: number; // Higher weight = more likely to be chosen
+  weight: number;
+}
+
+// Scale enemy stats based on level
+export function scaleEnemy(enemy: EnemyTemplate, targetLevel: number): EnemyTemplate {
+  const levelDiff = targetLevel - enemy.level;
+  const scalingFactor = 1 + (levelDiff * 0.2); // 20% increase per level
+
+  return {
+    ...enemy,
+    health: Math.round(enemy.health * scalingFactor),
+    maxHealth: Math.round(enemy.maxHealth * scalingFactor),
+    level: targetLevel,
+    experienceReward: Math.round(enemy.experienceReward * scalingFactor),
+    goldReward: {
+      min: Math.round(enemy.goldReward.min * scalingFactor),
+      max: Math.round(enemy.goldReward.max * scalingFactor)
+    },
+    moves: enemy.moves.map(move => ({
+      ...move,
+      damage: move.damage ? Math.round(move.damage * scalingFactor) : undefined,
+      block: move.block ? Math.round(move.block * scalingFactor) : undefined
+    }))
+  };
 }
 
 export const ENEMY_TEMPLATES: Record<string, EnemyTemplate> = {
@@ -27,6 +52,8 @@ export const ENEMY_TEMPLATES: Record<string, EnemyTemplate> = {
     health: 20,
     maxHealth: 20,
     level: 1,
+    experienceReward: 10,
+    goldReward: { min: 5, max: 15 },
     moves: [
       {
         name: 'Tackle',
@@ -46,7 +73,9 @@ export const ENEMY_TEMPLATES: Record<string, EnemyTemplate> = {
     name: 'Goblin',
     health: 25,
     maxHealth: 25,
-    level: 1,
+    level: 2,
+    experienceReward: 15,
+    goldReward: { min: 10, max: 20 },
     moves: [
       {
         name: 'Slash',
@@ -66,7 +95,9 @@ export const ENEMY_TEMPLATES: Record<string, EnemyTemplate> = {
     name: 'Dark Mage',
     health: 30,
     maxHealth: 30,
-    level: 2,
+    level: 3,
+    experienceReward: 20,
+    goldReward: { min: 15, max: 25 },
     moves: [
       {
         name: 'Shadow Bolt',

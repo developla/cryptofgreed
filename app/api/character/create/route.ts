@@ -42,8 +42,8 @@ const STARTER_DECKS = {
       rarity: Rarity.COMMON,
       energy: 1,
       damage: 4,
-      count: 4,
-      effects: [{ type: "MULTI_HIT", value: 2 }]
+      effects: [{ type: "MULTI_HIT", value: 2 }],
+      count: 4
     },
     {
       name: "Arcane Barrier",
@@ -153,7 +153,11 @@ export async function POST(request: Request) {
 
       await Promise.all(cardPromises);
 
-      return char;
+      // Return character with deck included
+      return tx.character.findUnique({
+        where: { id: char.id },
+        include: { deck: true }
+      });
     });
 
     return NextResponse.json({ character: newCharacter });
