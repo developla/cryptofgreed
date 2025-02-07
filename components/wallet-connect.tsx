@@ -1,23 +1,60 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { Button } from './ui/button';
-import { Wallet, LogOut } from 'lucide-react';
-import { WalletType } from '@prisma/client';
-import { useGameStore } from '@/lib/store/game';
-import { connectMetaMask } from '@/lib/web3/ethereum';
-import { connectPhantom } from '@/lib/web3/solana';
-import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { Button } from "./ui/button";
+import { Wallet, LogOut } from "lucide-react";
+import { WalletType } from "@prisma/client";
+import { useGameStore } from "@/lib/store/game";
+import { connectMetaMask } from "@/lib/web3/ethereum";
+import { connectPhantom } from "@/lib/web3/solana";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export function WalletConnect() {
   const [isConnecting, setIsConnecting] = useState(false);
-  const { connectWallet, disconnectWallet, isConnected, walletAddress, walletType, checkWalletConnection } = useGameStore();
+  const {
+    connectWallet,
+    disconnectWallet,
+    isConnected,
+    walletAddress,
+    walletType,
+    checkWalletConnection,
+    setCharacter,
+  } = useGameStore();
   const router = useRouter();
 
   useEffect(() => {
     checkWalletConnection();
   }, [checkWalletConnection]);
+
+  // Fetch character when wallet is connected
+  useEffect(() => {
+    const fetchCharacter = async () => {
+      if (!isConnected || !walletAddress) return;
+
+      try {
+        const response = await fetch("/api/character/get", {
+          headers: {
+            "x-wallet-address": walletAddress,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch character");
+        }
+
+        const { character } = await response.json();
+        if (character) {
+          setCharacter(character);
+          router.push("/map");
+        }
+      } catch (error) {
+        console.error("Error fetching character:", error);
+      }
+    };
+
+    fetchCharacter();
+  }, [isConnected, walletAddress, setCharacter, router]);
 
   const handleConnect = async (type: WalletType) => {
     setIsConnecting(true);
@@ -31,25 +68,25 @@ export function WalletConnect() {
       }
 
       if (!address) {
-        throw new Error('Failed to connect wallet');
+        throw new Error("Failed to connect wallet");
       }
 
-      const response = await fetch('/api/auth/wallet', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/auth/wallet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ address, type }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to authenticate wallet');
+        throw new Error("Failed to authenticate wallet");
       }
 
       const { user } = await response.json();
       connectWallet(address, type);
-      toast.success('Wallet connected successfully!');
+      toast.success("Wallet connected successfully!");
     } catch (error) {
-      console.error('Wallet connection error:', error);
-      toast.error('Failed to connect wallet. Please try again.');
+      console.error("Wallet connection error:", error);
+      toast.error("Failed to connect wallet. Please try again.");
     } finally {
       setIsConnecting(false);
     }
@@ -57,8 +94,8 @@ export function WalletConnect() {
 
   const handleDisconnect = () => {
     disconnectWallet();
-    toast.success('Wallet disconnected');
-    router.push('/');
+    toast.success("Wallet disconnected");
+    router.push("/");
   };
 
   if (isConnected && walletAddress) {
@@ -70,7 +107,7 @@ export function WalletConnect() {
             {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            {walletType === WalletType.ETHEREUM ? 'MetaMask' : 'Phantom'}
+            {walletType === WalletType.ETHEREUM ? "MetaMask" : "Phantom"}
           </p>
         </div>
         <Button
