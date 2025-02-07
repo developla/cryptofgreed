@@ -32,7 +32,7 @@ export function BattleScreen() {
   const [battleState, setBattleState] = useState<BattleState>({
     playerHealth: currentCharacter?.health || 0,
     playerBlock: 0,
-    playerEnergy: currentCharacter?.energy || 0,
+    playerEnergy: currentCharacter?.maxEnergy || 0,
     playerEffects: [],
     enemyHealth: 0,
     enemyBlock: 0,
@@ -41,6 +41,7 @@ export function BattleScreen() {
 
   const [currentEnemy, setCurrentEnemy] = useState<EnemyTemplate | null>(null);
   const [enemyIntent, setEnemyIntent] = useState<string>("");
+  const [currentMove, setCurrentMove] = useState<any>(null);
 
   useEffect(() => {
     if (!currentCharacter) {
@@ -56,6 +57,8 @@ export function BattleScreen() {
     setCurrentEnemy(randomEnemy);
     setBattleState((prev) => ({
       ...prev,
+      playerHealth: currentCharacter.health,
+      playerEnergy: currentCharacter.maxEnergy,
       enemyHealth: randomEnemy.health,
     }));
 
@@ -81,12 +84,13 @@ export function BattleScreen() {
       random -= move.weight;
       if (random <= 0) {
         setEnemyIntent(move.description);
+        setCurrentMove(move);
         return;
       }
     }
   };
 
-  const handlePlayCard = (cardIndex: number) => {
+  const handlePlayCard = async (cardIndex: number) => {
     const card = playerHand[cardIndex];
     if (!card || !currentEnemy) return;
 
@@ -94,6 +98,8 @@ export function BattleScreen() {
       toast.error("Not enough energy!");
       return;
     }
+
+    let newState = { ...battleState };
 
     // Calculate and apply damage
     if (card.damage) {
@@ -104,63 +110,76 @@ export function BattleScreen() {
         battleState.enemyBlock
       );
 
-      setBattleState((prev) => ({
-        ...prev,
-        enemyHealth: Math.max(0, prev.enemyHealth - damage),
+      newState = {
+        ...newState,
+        enemyHealth: Math.max(0, newState.enemyHealth - damage),
         enemyBlock: remainingBlock,
-      }));
+        playerEnergy: newState.playerEnergy - card.energy,
+      };
+    }
+
+    // Apply block
+    if (card.block) {
+      newState = {
+        ...newState,
+        playerBlock: newState.playerBlock + card.block,
+        playerEnergy: newState.playerEnergy - card.energy,
+      };
     }
 
     // Apply card effects
     if (card.effects) {
-      const newState = applyCardEffects(card.effects, battleState, true);
-      setBattleState(newState);
+      newState = applyCardEffects(card.effects, newState, true);
     }
 
-    // Play the card
+    // Update state
+    await setBattleState(newState);
     playCard(cardIndex);
-    setBattleState((prev) => ({
-      ...prev,
-      playerEnergy: prev.playerEnergy - card.energy,
-    }));
 
-    // Check for victory
-    if (battleState.enemyHealth <= 0) {
+    // Check for victory after state update
+    if (newState.enemyHealth <= 0) {
       handleVictory();
     }
   };
 
   const handleEnemyTurn = () => {
-    if (!currentEnemy) return;
+    if (!currentEnemy || !currentMove) return;
 
-    // Find the intended move
-    const move = currentEnemy.moves.find((m) => m.description === enemyIntent);
-    if (!move) return;
+    let newState = { ...battleState };
 
     // Apply enemy damage
-    if (move.damage) {
+    if (currentMove.damage) {
       const { damage, remainingBlock } = calculateDamage(
-        move.damage,
+        currentMove.damage,
         battleState.enemyEffects,
         battleState.playerEffects,
         battleState.playerBlock
       );
 
-      setBattleState((prev) => ({
-        ...prev,
-        playerHealth: Math.max(0, prev.playerHealth - damage),
+      newState = {
+        ...newState,
+        playerHealth: Math.max(0, newState.playerHealth - damage),
         playerBlock: remainingBlock,
-      }));
+      };
+    }
+
+    // Apply enemy block
+    if (currentMove.block) {
+      newState = {
+        ...newState,
+        enemyBlock: newState.enemyBlock + currentMove.block,
+      };
     }
 
     // Apply enemy effects
-    if (move.effects) {
-      const newState = applyCardEffects(move.effects, battleState, false);
-      setBattleState(newState);
+    if (currentMove.effects) {
+      newState = applyCardEffects(currentMove.effects, newState, false);
     }
 
-    // Check for defeat
-    if (battleState.playerHealth <= 0) {
+    setBattleState(newState);
+
+    // Check for defeat after state update
+    if (newState.playerHealth <= 0) {
       handleDefeat();
     }
   };
@@ -174,17 +193,21 @@ export function BattleScreen() {
     for (let i = 0; i < 5; i++) {
       drawCard();
     }
+
     setBattleState((prev) => ({
       ...prev,
       playerEnergy: currentCharacter?.maxEnergy || 0,
       playerBlock: 0, // Block resets each turn
+      enemyBlock: 0, // Enemy block also resets each turn
     }));
+
     determineEnemyIntent();
   };
 
   const handleVictory = () => {
     toast.success("Victory!");
-    // TODO: Add rewards
+    const goldReward = Math.floor(Math.random() * 30) + 20; // Random gold between 20-50
+    toast.success(`Earned ${goldReward} gold!`);
     endBattle();
     router.push("/map");
   };
@@ -217,6 +240,10 @@ export function BattleScreen() {
         <div className="text-sm text-muted-foreground">
           Intent: {enemyIntent}
         </div>
+        {/* Debug info */}
+        <div className="text-sm text-muted-foreground mt-2">
+          Enemy Health: {battleState.enemyHealth}/{currentEnemy.maxHealth}
+        </div>
       </div>
 
       {/* Player Section */}
@@ -230,6 +257,10 @@ export function BattleScreen() {
               }
               className="w-48"
             />
+            {/* Debug info */}
+            <div className="text-sm text-muted-foreground">
+              Health: {battleState.playerHealth}/{currentCharacter.maxHealth}
+            </div>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
