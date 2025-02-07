@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { Progress } from "../ui/progress";
 import { useGameStore } from "@/lib/store/game";
 import { Shield, Sword } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import { type EnemyTemplate } from "@/lib/game/enemies";
 import {
   calculateDamage,
