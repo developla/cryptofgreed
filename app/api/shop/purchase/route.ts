@@ -65,6 +65,10 @@ export async function POST(request: Request) {
         id: characterId,
         userId: user.id,
       },
+      include: {
+        deck: true,
+        equipment: true,
+      },
     });
 
     if (!character) {
@@ -83,7 +87,20 @@ export async function POST(request: Request) {
       // Deduct gold
       const updatedCharacter = await tx.character.update({
         where: { id: characterId },
-        data: { gold: { decrement: item.cost } },
+        data: { 
+          gold: { decrement: item.cost },
+          // Update maxHealth if equipment provides HP bonus
+          ...(item.type === 'EQUIPMENT' && 
+              item.effects.some(e => e.type === 'MAX_HP') && {
+            maxHealth: {
+              increment: item.effects.find(e => e.type === 'MAX_HP')?.value || 0
+            }
+          })
+        },
+        include: {
+          deck: true,
+          equipment: true,
+        },
       });
 
       if (item.type === 'CARD') {
@@ -114,7 +131,14 @@ export async function POST(request: Request) {
         });
       }
 
-      return updatedCharacter;
+      // Fetch the updated character with all relations
+      return tx.character.findUnique({
+        where: { id: characterId },
+        include: {
+          deck: true,
+          equipment: true,
+        },
+      });
     });
 
     return NextResponse.json({ character: result });

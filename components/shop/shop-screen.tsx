@@ -42,7 +42,7 @@ const MOCK_SHOP_ITEMS: ShopItem[] = [
 
 export function ShopScreen() {
   const router = useRouter();
-  const { currentCharacter, walletAddress } = useGameStore();
+  const { currentCharacter, walletAddress, setCharacter } = useGameStore();
   const [items] = useState<ShopItem[]>(MOCK_SHOP_ITEMS);
 
   const handlePurchase = async (item: ShopItem) => {
@@ -68,6 +68,11 @@ export function ShopScreen() {
       });
 
       if (!response.ok) throw new Error('Failed to purchase item');
+
+      const { character } = await response.json();
+      
+      // Update character in store immediately
+      setCharacter(character);
 
       toast.success('Item purchased successfully!');
     } catch (error) {

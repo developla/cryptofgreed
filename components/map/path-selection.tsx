@@ -3,9 +3,17 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '../ui/card';
-import { Button } from '../ui/button';
-import { Sword, ShoppingBag, Sparkles, Tent, Coins } from 'lucide-react';
+import {
+  Sword,
+  ShoppingBag,
+  Sparkles,
+  Tent,
+  Coins,
+  Shield,
+  Skull,
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface PathOption {
   id: string;
@@ -14,6 +22,7 @@ interface PathOption {
   description: string;
   icon: React.ElementType;
   difficulty?: 'NORMAL' | 'ELITE' | 'BOSS';
+  rewards?: string[];
 }
 
 const generatePathOptions = (currentLevel: number): PathOption[] => {
@@ -27,6 +36,7 @@ const generatePathOptions = (currentLevel: number): PathOption[] => {
     description: 'Face a normal enemy in combat.',
     icon: Sword,
     difficulty: 'NORMAL',
+    rewards: ['50-100 Gold', '25 XP', 'Common Card'],
   });
 
   // Add elite battle if level is high enough
@@ -35,9 +45,10 @@ const generatePathOptions = (currentLevel: number): PathOption[] => {
       id: 'elite',
       type: 'BATTLE',
       title: 'Elite Enemy',
-      description: 'A powerful foe with unique abilities and better rewards.',
-      icon: Sword,
+      description: 'A powerful foe with unique abilities.',
+      icon: Shield,
       difficulty: 'ELITE',
+      rewards: ['100-200 Gold', '50 XP', 'Rare Card'],
     });
   }
 
@@ -47,19 +58,21 @@ const generatePathOptions = (currentLevel: number): PathOption[] => {
       id: 'boss',
       type: 'BATTLE',
       title: 'Boss Battle',
-      description: 'A challenging boss fight with exceptional rewards.',
-      icon: Sword,
+      description: 'A challenging boss fight.',
+      icon: Skull,
       difficulty: 'BOSS',
+      rewards: ['250-500 Gold', '100 XP', 'Epic Item'],
     });
   }
 
-  // Add rest site if health is below 70%
+  // Add rest site
   options.push({
     id: 'rest',
     type: 'REST',
     title: 'Rest Site',
     description: 'Heal your wounds or upgrade a card.',
     icon: Tent,
+    rewards: ['Heal 30% HP', 'Upgrade 1 Card'],
   });
 
   // Add merchant with 30% chance
@@ -68,8 +81,9 @@ const generatePathOptions = (currentLevel: number): PathOption[] => {
       id: 'merchant',
       type: 'MERCHANT',
       title: 'Merchant',
-      description: 'Buy cards, potions, and equipment.',
+      description: 'Buy cards and equipment.',
       icon: ShoppingBag,
+      rewards: ['Shop Items', 'Remove Cards'],
     });
   }
 
@@ -79,8 +93,9 @@ const generatePathOptions = (currentLevel: number): PathOption[] => {
       id: 'treasure',
       type: 'TREASURE',
       title: 'Treasure Room',
-      description: 'Find valuable loot and rare items.',
+      description: 'Find valuable loot.',
       icon: Coins,
+      rewards: ['100-300 Gold', 'Random Item'],
     });
   }
 
@@ -90,8 +105,9 @@ const generatePathOptions = (currentLevel: number): PathOption[] => {
       id: 'event',
       type: 'EVENT',
       title: 'Mystery Event',
-      description: 'An unexpected encounter with unknown consequences.',
+      description: 'An unexpected encounter.',
       icon: Sparkles,
+      rewards: ['???'],
     });
   }
 
@@ -104,8 +120,13 @@ interface PathSelectionProps {
   onPathSelect: (path: PathOption) => void;
 }
 
-export function PathSelection({ characterLevel, onPathSelect }: PathSelectionProps) {
-  const [paths] = useState<PathOption[]>(() => generatePathOptions(characterLevel));
+export function PathSelection({
+  characterLevel,
+  onPathSelect,
+}: PathSelectionProps) {
+  const [paths] = useState<PathOption[]>(() =>
+    generatePathOptions(characterLevel)
+  );
   const [selectedPath, setSelectedPath] = useState<PathOption | null>(null);
   const router = useRouter();
 
@@ -132,55 +153,74 @@ export function PathSelection({ characterLevel, onPathSelect }: PathSelectionPro
       case 'TREASURE':
       case 'EVENT':
         toast.info('This feature is coming soon!');
-        router.push('/map');
         break;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background/90 to-background p-8">
-      <div className="mx-auto max-w-4xl">
-        <h1 className="mb-8 text-3xl font-bold">Choose Your Path</h1>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {paths.map((path) => {
-            const Icon = path.icon;
-            return (
-              <Card
-                key={path.id}
-                className={`cursor-pointer p-6 transition-colors hover:bg-accent ${
-                  selectedPath?.id === path.id ? 'border-primary' : ''
-                }`}
-                onClick={() => handlePathSelect(path)}
-              >
-                <div className="mb-4 flex items-center justify-center">
-                  <Icon className="h-12 w-12" />
-                </div>
-                <h3 className="mb-2 text-center text-xl font-bold">
-                  {path.title}
-                </h3>
-                {path.difficulty && (
-                  <div className="mb-2 text-center">
-                    <span
-                      className={`rounded px-2 py-1 text-xs font-bold ${
-                        path.difficulty === 'ELITE'
-                          ? 'bg-yellow-500/20 text-yellow-500'
-                          : path.difficulty === 'BOSS'
-                          ? 'bg-red-500/20 text-red-500'
-                          : 'bg-primary/20 text-primary'
-                      }`}
-                    >
-                      {path.difficulty}
-                    </span>
-                  </div>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {paths.map((path) => {
+        const Icon = path.icon;
+        return (
+          <Card
+            key={path.id}
+            className={cn(
+              'cursor-pointer p-4 transition-all hover:scale-105 hover:shadow-lg',
+              selectedPath?.id === path.id && 'border-primary bg-primary/5'
+            )}
+            onClick={() => handlePathSelect(path)}
+          >
+            <div className="mb-4 flex items-center gap-3">
+              <div
+                className={cn(
+                  'rounded-lg p-2',
+                  path.difficulty === 'ELITE'
+                    ? 'bg-yellow-500/10 text-yellow-500'
+                    : path.difficulty === 'BOSS'
+                    ? 'bg-red-500/10 text-red-500'
+                    : 'bg-primary/10 text-primary'
                 )}
-                <p className="text-center text-sm text-muted-foreground">
-                  {path.description}
+              >
+                <Icon className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-bold">{path.title}</h3>
+                {path.difficulty && (
+                  <span
+                    className={cn(
+                      'text-xs font-semibold',
+                      path.difficulty === 'ELITE'
+                        ? 'text-yellow-500'
+                        : path.difficulty === 'BOSS'
+                        ? 'text-red-500'
+                        : 'text-primary'
+                    )}
+                  >
+                    {path.difficulty}
+                  </span>
+                )}
+              </div>
+            </div>
+            <p className="mb-4 text-sm text-muted-foreground">
+              {path.description}
+            </p>
+            {path.rewards && (
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-muted-foreground">
+                  Rewards:
                 </p>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
+                <ul className="list-inside list-disc space-y-1">
+                  {path.rewards.map((reward, index) => (
+                    <li key={index} className="text-xs text-muted-foreground">
+                      {reward}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </Card>
+        );
+      })}
     </div>
   );
 }
