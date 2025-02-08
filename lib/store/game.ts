@@ -6,6 +6,7 @@ import {
   CardType,
   Rarity,
   Effect,
+  EquipmentSlot,
 } from '@prisma/client';
 
 declare global {
@@ -27,7 +28,7 @@ interface GameState {
   playerHand: Card[];
   playerDeck: Card[];
   playerDiscardPile: Card[];
-  originalDeck: Card[]; // New state to store the original deck
+  originalDeck: Card[];
 
   // Actions
   connectWallet: (address: string, type: WalletType) => void;
@@ -53,6 +54,7 @@ interface Character {
   maxEnergy: number;
   gold: number;
   deck?: Card[];
+  equipment?: Equipment[];
 }
 
 interface Card {
@@ -65,6 +67,15 @@ interface Card {
   damage?: number;
   block?: number;
   effects?: Effect[];
+}
+
+interface Equipment {
+  id: string;
+  name: string;
+  description: string;
+  slot: EquipmentSlot;
+  rarity: Rarity;
+  effects: Effect[];
 }
 
 const initialState = {
@@ -171,8 +182,7 @@ export const useGameStore = create<GameState>()(
       },
 
       drawCard: () => {
-        const { playerDeck, playerHand, playerDiscardPile, originalDeck } =
-          get();
+        const { playerDeck, playerHand, playerDiscardPile, originalDeck } = get();
 
         // If deck is empty, check discard pile
         if (playerDeck.length === 0) {
@@ -180,9 +190,7 @@ export const useGameStore = create<GameState>()(
           if (playerDiscardPile.length === 0) {
             if (originalDeck.length === 0) return;
 
-            const shuffledDeck = [...originalDeck].sort(
-              () => Math.random() - 0.5
-            );
+            const shuffledDeck = [...originalDeck].sort(() => Math.random() - 0.5);
             set({
               playerDeck: shuffledDeck.slice(1),
               playerHand: [...playerHand, shuffledDeck[0]],
