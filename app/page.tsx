@@ -3,8 +3,8 @@ import { CharacterCreation } from '@/components/character-creation';
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-background/90 to-background">
-      <div className="container mx-auto px-4 py-8">
+    <main className="flex min-h-screen flex-col items-center bg-gradient-to-b from-background/90 to-background px-4 py-8">
+      <div className="container max-w-2xl">
         <GameTitle />
         <CharacterCreation />
       </div>

@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Settings2,
   RefreshCw,
+  Settings,
 } from 'lucide-react';
 import {
   Sheet,
@@ -26,11 +27,23 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
+import Link from 'next/link';
+
+interface Equipment {
+  id: string;
+  name: string;
+  description: string;
+  effects: Array<{
+    type: string;
+    value: number;
+  }>;
+}
 
 const EXPERIENCE_PER_LEVEL = 100;
 
 export function GameHeader() {
-  const { currentCharacter, isConnected, checkAuth, setCharacter } = useGameStore();
+  const { currentCharacter, isConnected, checkAuth, setCharacter } =
+    useGameStore();
   const router = useRouter();
   const pathname = usePathname();
   const [showGearSheet, setShowGearSheet] = useState(false);
@@ -127,7 +140,10 @@ export function GameHeader() {
                         </p>
                       </div>
                       <div className="mt-1 w-full">
-                        <Progress value={calculateXpProgress()} className="h-1" />
+                        <Progress
+                          value={calculateXpProgress()}
+                          className="h-1"
+                        />
                         <p className="text-xs text-muted-foreground">
                           XP: {currentCharacter.experience} /{' '}
                           {currentCharacter.level * EXPERIENCE_PER_LEVEL}
@@ -227,7 +243,7 @@ export function GameHeader() {
                       {currentCharacter.equipment &&
                       currentCharacter.equipment.length > 0 ? (
                         <div className="space-y-4">
-                          {currentCharacter.equipment.map((item) => (
+                          {currentCharacter.equipment.map((item: Equipment) => (
                             <Card
                               key={item.id}
                               className="flex items-start gap-3 p-3"
@@ -270,7 +286,17 @@ export function GameHeader() {
             )}
           </div>
 
-          <AuthHeader />
+          <div className="flex items-center gap-2">
+            {isConnected && (
+              <Button variant="ghost" size="sm" asChild className="gap-2">
+                <Link href="/settings">
+                  <Settings className="h-4 w-4" />
+                  <span className="hidden sm:inline">Settings</span>
+                </Link>
+              </Button>
+            )}
+            <AuthHeader />
+          </div>
         </div>
       </div>
     </div>

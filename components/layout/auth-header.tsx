@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '../ui/button';
-import { LogIn, LogOut, Wallet } from 'lucide-react';
+import { LogIn, LogOut } from 'lucide-react';
 import { useGameStore } from '@/lib/store/game';
 import { useState } from 'react';
 import {
@@ -13,16 +13,37 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { EmailAuth } from '../auth/email-auth';
-import { WalletConnect } from '../wallet-connect';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export function AuthHeader() {
-  const { isConnected, emailAuth, logoutEmail, disconnectWallet } = useGameStore();
+  const { isConnected, emailAuth, logoutEmail } = useGameStore();
   const [showAuthSheet, setShowAuthSheet] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const router = useRouter();
 
-  const handleLogout = () => {
-    logoutEmail();
-    disconnectWallet();
-    setShowAuthSheet(false);
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to logout');
+      }
+
+      logoutEmail();
+      setShowAuthSheet(false);
+      router.push('/');
+      toast.success('Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to logout');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -38,10 +59,20 @@ export function AuthHeader() {
             variant="outline"
             size="sm"
             onClick={handleLogout}
+            disabled={isLoggingOut}
             className="gap-2"
           >
-            <LogOut className="h-4 w-4" />
-            Logout
+            {isLoggingOut ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Logging out...
+              </>
+            ) : (
+              <>
+                <LogOut className="h-4 w-4" />
+                Logout
+              </>
+            )}
           </Button>
         </>
       ) : (
@@ -56,25 +87,11 @@ export function AuthHeader() {
             <SheetHeader>
               <SheetTitle>Login or Register</SheetTitle>
               <SheetDescription>
-                Choose your preferred login method
+                Sign in to your account or create a new one
               </SheetDescription>
             </SheetHeader>
-            <div className="mt-6 space-y-6">
+            <div className="mt-6">
               <EmailAuth onSuccess={() => setShowAuthSheet(false)} />
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                    Or continue with
-                  </span>
-                </div>
-              </div>
-              <WalletConnect
-                minimal
-                onSuccess={() => setShowAuthSheet(false)}
-              />
             </div>
           </SheetContent>
         </Sheet>
