@@ -448,7 +448,7 @@ export function BattleScreen() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background/90 to-background p-4">
+    <div className="min-h-screen bg-gradient-to-b from-background/90 to-background p-4 pt-20">
       <div className="mb-8">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-xl font-bold">{currentEnemy.name}</h2>

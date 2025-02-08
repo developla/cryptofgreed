@@ -104,8 +104,13 @@ interface PathSelectionProps {
   onPathSelect: (path: PathOption) => void;
 }
 
-export function PathSelection({ characterLevel, onPathSelect }: PathSelectionProps) {
-  const [paths] = useState<PathOption[]>(() => generatePathOptions(characterLevel));
+export function PathSelection({
+  characterLevel,
+  onPathSelect,
+}: PathSelectionProps) {
+  const [paths] = useState<PathOption[]>(() =>
+    generatePathOptions(characterLevel)
+  );
   const [selectedPath, setSelectedPath] = useState<PathOption | null>(null);
   const router = useRouter();
 
@@ -165,8 +170,8 @@ export function PathSelection({ characterLevel, onPathSelect }: PathSelectionPro
                         path.difficulty === 'ELITE'
                           ? 'bg-yellow-500/20 text-yellow-500'
                           : path.difficulty === 'BOSS'
-                          ? 'bg-red-500/20 text-red-500'
-                          : 'bg-primary/20 text-primary'
+                            ? 'bg-red-500/20 text-red-500'
+                            : 'bg-primary/20 text-primary'
                       }`}
                     >
                       {path.difficulty}

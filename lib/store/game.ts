@@ -182,7 +182,8 @@ export const useGameStore = create<GameState>()(
       },
 
       drawCard: () => {
-        const { playerDeck, playerHand, playerDiscardPile, originalDeck } = get();
+        const { playerDeck, playerHand, playerDiscardPile, originalDeck } =
+          get();
 
         // If deck is empty, check discard pile
         if (playerDeck.length === 0) {
@@ -190,7 +191,9 @@ export const useGameStore = create<GameState>()(
           if (playerDiscardPile.length === 0) {
             if (originalDeck.length === 0) return;
 
-            const shuffledDeck = [...originalDeck].sort(() => Math.random() - 0.5);
+            const shuffledDeck = [...originalDeck].sort(
+              () => Math.random() - 0.5
+            );
             set({
               playerDeck: shuffledDeck.slice(1),
               playerHand: [...playerHand, shuffledDeck[0]],
