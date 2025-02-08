@@ -82,7 +82,9 @@ export function ShopScreen() {
       toast.success('Item purchased successfully!');
     } catch (error) {
       console.error('Purchase error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to purchase item');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to purchase item'
+      );
     } finally {
       setIsPurchasing(false);
     }

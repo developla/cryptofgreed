@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { CharacterClass, WalletType, CardType, Rarity, Effect } from '@prisma/client';
+import {
+  CharacterClass,
+  WalletType,
+  CardType,
+  Rarity,
+  Effect,
+} from '@prisma/client';
 
 interface GameState {
   // Auth State
@@ -173,13 +179,16 @@ export const useGameStore = create<GameState>()(
       },
 
       drawCard: () => {
-        const { playerDeck, playerHand, playerDiscardPile, originalDeck } = get();
+        const { playerDeck, playerHand, playerDiscardPile, originalDeck } =
+          get();
 
         if (playerDeck.length === 0) {
           if (playerDiscardPile.length === 0) {
             if (originalDeck.length === 0) return;
 
-            const shuffledDeck = [...originalDeck].sort(() => Math.random() - 0.5);
+            const shuffledDeck = [...originalDeck].sort(
+              () => Math.random() - 0.5
+            );
             set({
               playerDeck: shuffledDeck.slice(1),
               playerHand: [...playerHand, shuffledDeck[0]],
@@ -187,7 +196,9 @@ export const useGameStore = create<GameState>()(
             return;
           }
 
-          const shuffledDeck = [...playerDiscardPile].sort(() => Math.random() - 0.5);
+          const shuffledDeck = [...playerDiscardPile].sort(
+            () => Math.random() - 0.5
+          );
           set({
             playerDeck: shuffledDeck.slice(1),
             playerHand: [...playerHand, shuffledDeck[0]],

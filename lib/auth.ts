@@ -17,7 +17,10 @@ export async function verifyAuth(request: Request) {
       return null;
     }
 
-    const decoded = verify(token, JWT_SECRET) as { userId: string; email: string };
+    const decoded = verify(token, JWT_SECRET) as {
+      userId: string;
+      email: string;
+    };
     return prisma.user.findUnique({ where: { id: decoded.userId } });
   } catch (error) {
     return null;

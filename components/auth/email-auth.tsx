@@ -97,8 +97,10 @@ export function EmailAuth({ onSuccess }: EmailAuthProps) {
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
               {isLogin ? 'Logging in...' : 'Creating account...'}
             </div>
+          ) : isLogin ? (
+            'Login'
           ) : (
-            isLogin ? 'Login' : 'Create Account'
+            'Create Account'
           )}
         </Button>
 

@@ -30,7 +30,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const token = await createAuthToken(user.id, user.email);
+    // Create and set auth token
+    const token = await createAuthToken(user.id, user.email || ''); // Handle potential null email
     setAuthCookie(token);
 
     return NextResponse.json({ user: { id: user.id, email: user.email } });

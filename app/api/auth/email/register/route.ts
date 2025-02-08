@@ -37,11 +37,11 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       user: {
         id: user.id,
         email: user.email,
-      }
+      },
     });
   } catch (error) {
     console.error('Registration error:', error);

@@ -42,7 +42,8 @@ interface Equipment {
 const EXPERIENCE_PER_LEVEL = 100;
 
 export function GameHeader() {
-  const { currentCharacter, isConnected, checkAuth, setCharacter } = useGameStore();
+  const { currentCharacter, isConnected, checkAuth, setCharacter } =
+    useGameStore();
   const router = useRouter();
   const pathname = usePathname();
   const [showGearSheet, setShowGearSheet] = useState(false);
@@ -139,7 +140,10 @@ export function GameHeader() {
                         </p>
                       </div>
                       <div className="mt-1 w-full">
-                        <Progress value={calculateXpProgress()} className="h-1" />
+                        <Progress
+                          value={calculateXpProgress()}
+                          className="h-1"
+                        />
                         <p className="text-xs text-muted-foreground">
                           XP: {currentCharacter.experience} /{' '}
                           {currentCharacter.level * EXPERIENCE_PER_LEVEL}

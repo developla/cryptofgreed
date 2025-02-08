@@ -37,7 +37,7 @@ export function RestScreen() {
 
       const { character, healAmount } = await response.json();
       setCharacter(character);
-      
+
       toast.success(`Rested and recovered ${healAmount} HP!`);
       router.push('/map');
     } catch (error) {
@@ -55,7 +55,8 @@ export function RestScreen() {
   if (!currentCharacter) return null;
 
   const healAmount = Math.floor(currentCharacter.maxHealth * 0.3);
-  const healthPercent = (currentCharacter.health / currentCharacter.maxHealth) * 100;
+  const healthPercent =
+    (currentCharacter.health / currentCharacter.maxHealth) * 100;
   const isFullHealth = currentCharacter.health === currentCharacter.maxHealth;
 
   return (

@@ -310,7 +310,8 @@ export function BattleScreen() {
       // Calculate rewards
       const goldReward =
         Math.floor(
-          Math.random() * (currentEnemy.goldReward.max - currentEnemy.goldReward.min + 1)
+          Math.random() *
+            (currentEnemy.goldReward.max - currentEnemy.goldReward.min + 1)
         ) + currentEnemy.goldReward.min;
 
       const response = await fetch('/api/character/update', {
@@ -392,7 +393,9 @@ export function BattleScreen() {
         credentials: 'include',
       });
 
-      toast.error('Defeat! Your character has been blocked from further battles.');
+      toast.error(
+        'Defeat! Your character has been blocked from further battles.'
+      );
       endBattle();
       router.push('/map');
     } catch (error) {

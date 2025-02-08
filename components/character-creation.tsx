@@ -138,7 +138,9 @@ export function CharacterCreation() {
       router.push('/map');
     } catch (error) {
       console.error('Character creation error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to create character');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to create character'
+      );
     } finally {
       setIsCreating(false);
     }

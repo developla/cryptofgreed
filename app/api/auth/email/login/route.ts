@@ -36,11 +36,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const token = sign(
-      { userId: user.id, email: user.email },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    const token = sign({ userId: user.id, email: user.email }, JWT_SECRET, {
+      expiresIn: '7d',
+    });
 
     // Set HTTP-only cookie
     cookies().set('auth_token', token, {
@@ -51,17 +49,14 @@ export async function POST(request: Request) {
       path: '/',
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       user: {
         id: user.id,
         email: user.email,
-      }
+      },
     });
   } catch (error) {
     console.error('Login error:', error);
-    return NextResponse.json(
-      { error: 'Failed to login' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to login' }, { status: 500 });
   }
 }

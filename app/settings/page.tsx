@@ -73,7 +73,9 @@ export default function SettingsPage() {
       setNewEmail('');
     } catch (error) {
       console.error('Email update error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to update email');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to update email'
+      );
     } finally {
       setIsUpdating(false);
     }
@@ -107,7 +109,9 @@ export default function SettingsPage() {
       setNewPassword('');
     } catch (error) {
       console.error('Password update error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to update password');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to update password'
+      );
     } finally {
       setIsUpdating(false);
     }

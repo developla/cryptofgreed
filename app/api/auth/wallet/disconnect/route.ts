@@ -21,12 +21,12 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
       user: {
         id: updatedUser.id,
         email: updatedUser.email,
-      }
+      },
     });
   } catch (error) {
     console.error('Failed to disconnect wallet:', error);

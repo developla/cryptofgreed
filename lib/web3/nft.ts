@@ -3,7 +3,9 @@ import { Interface } from 'ethers';
 
 // For development/testing, you can use a testnet address
 // For production, replace with your deployed NFT contract address
-export const NFT_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_NFT_CONTRACT_ADDRESS || '0x0000000000000000000000000000000000000000';
+export const NFT_CONTRACT_ADDRESS =
+  process.env.NEXT_PUBLIC_NFT_CONTRACT_ADDRESS ||
+  '0x0000000000000000000000000000000000000000';
 
 // Define the ABI using Interface format
 const NFT_CONTRACT_ABI = new Interface([
@@ -11,11 +13,11 @@ const NFT_CONTRACT_ABI = new Interface([
   'function balanceOf(address owner) view returns (uint256)',
   'function ownerOf(uint256 tokenId) view returns (address)',
   'function tokenURI(uint256 tokenId) view returns (string)',
-  
+
   // Gaming-specific functions
   'function getTokenRarity(uint256 tokenId) view returns (uint8)',
   'function getTokenBonus(uint256 tokenId) view returns (uint256)',
-  
+
   // Events
   'event TreasureOpened(address indexed player, uint256 tokenId, uint256 reward)',
   'function emitTreasureOpened(uint256 tokenId, uint256 reward) external',
@@ -79,7 +81,7 @@ export async function getNftPerks(
       try {
         const rarity = await contract.getTokenRarity(i);
         const bonus = await contract.getTokenBonus(i);
-        
+
         // Add rarity-based bonuses
         perks.treasureBonus! += Number(rarity) * 10; // Each rarity level adds 10% to treasure finds
         perks.bonusGold! += Number(bonus); // Add token-specific gold bonus
@@ -109,7 +111,7 @@ export function applyNftBonusesToTreasure(
   rarity: number;
 } {
   const rewards = { ...baseRewards };
-  
+
   if (nftPerks.treasureBonus && rewards.gold) {
     rewards.gold = Math.floor(
       rewards.gold * (1 + nftPerks.treasureBonus / 100)

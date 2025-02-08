@@ -59,7 +59,9 @@ export function TreasureRoom() {
       };
 
       // Get NFT perks and apply bonuses
-      const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL);
+      const provider = new ethers.JsonRpcProvider(
+        process.env.NEXT_PUBLIC_RPC_URL
+      );
       const nftPerks = await getNftPerks(walletAddress, provider);
       const finalRewards = applyNftBonusesToTreasure(baseRewards, nftPerks);
 
@@ -101,16 +103,17 @@ export function TreasureRoom() {
           const receipt = await tx.wait();
 
           // Show transaction link
-          const networkPrefix = process.env.NEXT_PUBLIC_NETWORK === 'mainnet' 
-            ? '' 
-            : process.env.NEXT_PUBLIC_NETWORK + '.';
+          const networkPrefix =
+            process.env.NEXT_PUBLIC_NETWORK === 'mainnet'
+              ? ''
+              : process.env.NEXT_PUBLIC_NETWORK + '.';
           const txLink = `https://${networkPrefix}etherscan.io/tx/${receipt.hash}`;
           toast.success(
             <div>
               Treasure opened! View transaction:
-              <a 
-                href={txLink} 
-                target="_blank" 
+              <a
+                href={txLink}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="ml-2 text-blue-500 hover:underline"
               >
@@ -207,10 +210,7 @@ export function TreasureRoom() {
                   <span className="font-semibold">Rarity Level</span>
                   <span>{reward.rarity}%</span>
                 </div>
-                <Progress
-                  value={reward.rarity}
-                  className="bg-primary/20"
-                />
+                <Progress value={reward.rarity} className="bg-primary/20" />
               </div>
             </div>
 

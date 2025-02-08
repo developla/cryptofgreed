@@ -60,10 +60,7 @@ export async function POST(request: Request) {
     const item = SHOP_ITEMS[itemId];
 
     if (!item) {
-      return NextResponse.json(
-        { error: 'Item not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
 
     // Start a transaction to handle the purchase
@@ -148,7 +145,10 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Failed to purchase item:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to purchase item' },
+      {
+        error:
+          error instanceof Error ? error.message : 'Failed to purchase item',
+      },
       { status: 500 }
     );
   }
