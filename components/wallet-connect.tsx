@@ -71,7 +71,7 @@ export function WalletConnect({ minimal = false }: WalletConnectProps) {
     if (address && address !== walletAddress) {
       handleConnect(WalletType.ETHEREUM);
     }
-  }, [address]);
+  }, [address, walletAddress]);
 
   const handleConnect = async (type: WalletType) => {
     setIsConnecting(true);
@@ -189,10 +189,40 @@ export function WalletConnect({ minimal = false }: WalletConnectProps) {
 
   if (minimal) {
     return (
-      <Button size="sm" onClick={() => setShowOptions(true)} className="gap-2">
-        <Wallet className="h-4 w-4" />
-        Connect Wallet
-      </Button>
+      <div className="relative">
+        <Button
+          size="sm"
+          onClick={() => setShowOptions(!showOptions)}
+          className="gap-2"
+        >
+          <Wallet className="h-4 w-4" />
+          Connect Wallet
+        </Button>
+        {showOptions && (
+          <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border bg-background p-2 shadow-lg">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start"
+              onClick={() => handleConnect(WalletType.ETHEREUM)}
+              disabled={isConnecting}
+            >
+              <Wallet className="mr-2 h-4 w-4" />
+              MetaMask
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start"
+              onClick={() => handleConnect(WalletType.SOLANA)}
+              disabled={isConnecting}
+            >
+              <Wallet className="mr-2 h-4 w-4" />
+              Phantom
+            </Button>
+          </div>
+        )}
+      </div>
     );
   }
 
