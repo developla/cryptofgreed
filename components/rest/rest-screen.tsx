@@ -7,14 +7,15 @@ import { Card } from '../ui/card';
 import { useGameStore } from '@/lib/store/game';
 import { Heart, Swords } from 'lucide-react';
 import { toast } from 'sonner';
+import { Progress } from '../ui/progress';
 
 export function RestScreen() {
   const router = useRouter();
-  const { currentCharacter, walletAddress, setCharacter } = useGameStore();
+  const { currentCharacter, setCharacter } = useGameStore();
   const [isResting, setIsResting] = useState(false);
 
   const handleRest = async () => {
-    if (!currentCharacter || !walletAddress) return;
+    if (!currentCharacter) return;
 
     setIsResting(true);
     try {
@@ -22,25 +23,26 @@ export function RestScreen() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-wallet-address': walletAddress,
         },
+        credentials: 'include',
         body: JSON.stringify({
           characterId: currentCharacter.id,
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to rest');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to rest');
+      }
 
-      const { character } = await response.json();
-      
-      // Update character in store immediately
+      const { character, healAmount } = await response.json();
       setCharacter(character);
       
-      toast.success('You feel refreshed!');
+      toast.success(`Rested and recovered ${healAmount} HP!`);
       router.push('/map');
     } catch (error) {
       console.error('Rest error:', error);
-      toast.error('Failed to rest');
+      toast.error(error instanceof Error ? error.message : 'Failed to rest');
     } finally {
       setIsResting(false);
     }
@@ -53,6 +55,8 @@ export function RestScreen() {
   if (!currentCharacter) return null;
 
   const healAmount = Math.floor(currentCharacter.maxHealth * 0.3);
+  const healthPercent = (currentCharacter.health / currentCharacter.maxHealth) * 100;
+  const isFullHealth = currentCharacter.health === currentCharacter.maxHealth;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background/90 to-background p-8">
@@ -66,21 +70,29 @@ export function RestScreen() {
               <div>
                 <h3 className="text-lg font-bold">Rest</h3>
                 <p className="text-sm text-muted-foreground">
-                  Heal {healAmount} HP (
-                  {Math.floor((healAmount / currentCharacter.maxHealth) * 100)}%
-                  of max HP)
+                  {isFullHealth
+                    ? 'Already at full health'
+                    : `Heal ${healAmount} HP (${Math.floor(
+                        (healAmount / currentCharacter.maxHealth) * 100
+                      )}% of max HP)`}
                 </p>
               </div>
             </div>
             <Button
               className="w-full"
               onClick={handleRest}
-              disabled={
-                isResting ||
-                currentCharacter.health === currentCharacter.maxHealth
-              }
+              disabled={isResting || isFullHealth}
             >
-              Rest
+              {isResting ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  Resting...
+                </div>
+              ) : isFullHealth ? (
+                'Already at Full Health'
+              ) : (
+                'Rest'
+              )}
             </Button>
           </Card>
 
@@ -98,6 +110,7 @@ export function RestScreen() {
               variant="outline"
               className="w-full"
               onClick={handleContinue}
+              disabled={isResting}
             >
               Continue
             </Button>
@@ -106,14 +119,15 @@ export function RestScreen() {
 
         <div className="mt-8">
           <h2 className="mb-4 text-xl font-bold">Current Status</h2>
-          <div className="flex gap-4">
-            <Card className="p-4">
-              <p className="text-sm text-muted-foreground">Health</p>
-              <p className="font-bold">
+          <Card className="p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Health</span>
+              <span className="text-sm">
                 {currentCharacter.health} / {currentCharacter.maxHealth}
-              </p>
-            </Card>
-          </div>
+              </span>
+            </div>
+            <Progress value={healthPercent} className="h-2" />
+          </Card>
         </div>
       </div>
     </div>

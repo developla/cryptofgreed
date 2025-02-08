@@ -42,11 +42,15 @@ const MOCK_SHOP_ITEMS: ShopItem[] = [
 
 export function ShopScreen() {
   const router = useRouter();
-  const { currentCharacter, walletAddress, setCharacter } = useGameStore();
+  const { currentCharacter, setCharacter } = useGameStore();
   const [items] = useState<ShopItem[]>(MOCK_SHOP_ITEMS);
+  const [isPurchasing, setIsPurchasing] = useState(false);
 
   const handlePurchase = async (item: ShopItem) => {
-    if (!currentCharacter || !walletAddress) return;
+    if (!currentCharacter) {
+      toast.error('No character selected');
+      return;
+    }
 
     if (currentCharacter.gold < item.cost) {
       toast.error('Not enough gold!');
@@ -54,30 +58,33 @@ export function ShopScreen() {
     }
 
     try {
+      setIsPurchasing(true);
+
       const response = await fetch('/api/shop/purchase', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-wallet-address': walletAddress,
         },
+        credentials: 'include',
         body: JSON.stringify({
           characterId: currentCharacter.id,
           itemId: item.id,
-          type: item.type,
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to purchase item');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to purchase item');
+      }
 
       const { character } = await response.json();
-      
-      // Update character in store immediately
       setCharacter(character);
-
       toast.success('Item purchased successfully!');
     } catch (error) {
       console.error('Purchase error:', error);
-      toast.error('Failed to purchase item');
+      toast.error(error instanceof Error ? error.message : 'Failed to purchase item');
+    } finally {
+      setIsPurchasing(false);
     }
   };
 
@@ -121,10 +128,10 @@ export function ShopScreen() {
                 </div>
                 <Button
                   size="sm"
-                  disabled={currentCharacter.gold < item.cost}
+                  disabled={currentCharacter.gold < item.cost || isPurchasing}
                   onClick={() => handlePurchase(item)}
                 >
-                  Purchase
+                  {isPurchasing ? 'Purchasing...' : 'Purchase'}
                 </Button>
               </div>
             </Card>

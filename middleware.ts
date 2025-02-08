@@ -2,26 +2,20 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // Only run on /api/character routes
+  // Only protect API routes that need authentication
   if (!request.nextUrl.pathname.startsWith('/api/character')) {
     return NextResponse.next();
   }
 
-  const walletAddress = request.headers.get('x-wallet-address');
-  if (!walletAddress) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const authToken = request.cookies.get('auth_token');
+  if (!authToken?.value) {
+    return NextResponse.json(
+      { error: 'Authentication required' },
+      { status: 401 }
+    );
   }
 
-  // Clone the headers to modify them
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('x-wallet-address', walletAddress);
-
-  // Return response with modified headers
-  return NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+  return NextResponse.next();
 }
 
 export const config = {

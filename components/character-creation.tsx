@@ -52,47 +52,59 @@ export function CharacterCreation() {
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [characters, setCharacters] = useState<Character[]>([]);
-  const { setCharacter, isConnected, walletAddress, checkWalletConnection } =
-    useGameStore();
+  const { setCharacter, isConnected } = useGameStore();
   const router = useRouter();
 
   useEffect(() => {
+    let mounted = true;
+
     const initializeCharacters = async () => {
-      if (!isConnected || !walletAddress) {
+      if (!isConnected) {
         setIsLoading(false);
         return;
       }
 
       try {
         const response = await fetch('/api/character/get', {
-          headers: {
-            'x-wallet-address': walletAddress,
-          },
+          credentials: 'include',
         });
+
+        if (!mounted) return;
 
         if (response.ok) {
           const { characters } = await response.json();
           setCharacters(characters);
 
-          // If there's only one character, auto-select it
           if (characters.length === 1) {
             setCharacter(characters[0]);
             router.push('/map');
           }
+        } else {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to fetch characters');
         }
       } catch (error) {
         console.error('Failed to fetch characters:', error);
         toast.error('Failed to load characters');
       } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     initializeCharacters();
-  }, [isConnected, walletAddress, setCharacter, router]);
+
+    return () => {
+      mounted = false;
+    };
+  }, [isConnected, setCharacter, router]);
 
   const handleCreate = async () => {
-    if (!name || !walletAddress) return;
+    if (!name) {
+      toast.error('Please enter a character name');
+      return;
+    }
 
     setIsCreating(true);
     const stats = CLASS_INFO[selectedClass].stats;
@@ -110,13 +122,14 @@ export function CharacterCreation() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-wallet-address': walletAddress,
         },
+        credentials: 'include',
         body: JSON.stringify(character),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create character');
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create character');
       }
 
       const { character: createdCharacter } = await response.json();
@@ -125,7 +138,7 @@ export function CharacterCreation() {
       router.push('/map');
     } catch (error) {
       console.error('Character creation error:', error);
-      toast.error('Failed to create character. Please try again.');
+      toast.error(error instanceof Error ? error.message : 'Failed to create character');
     } finally {
       setIsCreating(false);
     }
@@ -137,7 +150,16 @@ export function CharacterCreation() {
   };
 
   if (!isConnected) {
-    return null;
+    return (
+      <Card className="w-full max-w-2xl p-6">
+        <div className="text-center">
+          <h2 className="mb-4 text-2xl font-bold">Welcome to Project Gamify</h2>
+          <p className="text-muted-foreground">
+            Please log in or create an account to start your adventure
+          </p>
+        </div>
+      </Card>
+    );
   }
 
   if (isLoading) {

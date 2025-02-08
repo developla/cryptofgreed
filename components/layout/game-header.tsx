@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Card } from '../ui/card';
 import { Progress } from '../ui/progress';
-import { WalletConnect } from '../wallet-connect';
+import { AuthHeader } from './auth-header';
 import { useGameStore } from '@/lib/store/game';
 import {
   Sword,
@@ -14,6 +14,7 @@ import {
   Trophy,
   ShieldCheck,
   Settings2,
+  RefreshCw,
 } from 'lucide-react';
 import {
   Sheet,
@@ -23,26 +24,64 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { Button } from '../ui/button';
+import { toast } from 'sonner';
 
 const EXPERIENCE_PER_LEVEL = 100;
 
 export function GameHeader() {
-  const { currentCharacter, isConnected, checkWalletConnection } =
-    useGameStore();
+  const { currentCharacter, isConnected, checkAuth, setCharacter } = useGameStore();
   const router = useRouter();
   const pathname = usePathname();
   const [showGearSheet, setShowGearSheet] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const isStillConnected = await checkWalletConnection();
-      if (!isStillConnected && pathname !== '/') {
+    let mounted = true;
+
+    const verifyAuth = async () => {
+      const isAuthenticated = await checkAuth();
+      if (mounted && !isAuthenticated && pathname !== '/') {
         router.push('/');
       }
     };
 
-    checkAuth();
-  }, [checkWalletConnection, router, pathname]);
+    verifyAuth();
+
+    return () => {
+      mounted = false;
+    };
+  }, [checkAuth, router, pathname]);
+
+  const handleRefreshGear = async () => {
+    if (!currentCharacter) return;
+
+    setIsRefreshing(true);
+    try {
+      const response = await fetch('/api/character/get', {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to refresh gear');
+      }
+
+      const { characters } = await response.json();
+      const updatedCharacter = characters.find(
+        (c: any) => c.id === currentCharacter.id
+      );
+
+      if (updatedCharacter) {
+        setCharacter(updatedCharacter);
+        toast.success('Gear list refreshed');
+      }
+    } catch (error) {
+      console.error('Failed to refresh gear:', error);
+      toast.error('Failed to refresh gear');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Calculate XP progress
   const calculateXpProgress = () => {
@@ -60,7 +99,7 @@ export function GameHeader() {
       <div className="fixed left-0 right-0 top-0 z-50 border-b bg-background/95">
         <div className="container mx-auto px-4 py-2">
           <div className="flex justify-end">
-            <WalletConnect minimal />
+            <AuthHeader />
           </div>
         </div>
       </div>
@@ -88,10 +127,7 @@ export function GameHeader() {
                         </p>
                       </div>
                       <div className="mt-1 w-full">
-                        <Progress
-                          value={calculateXpProgress()}
-                          className="h-1"
-                        />
+                        <Progress value={calculateXpProgress()} className="h-1" />
                         <p className="text-xs text-muted-foreground">
                           XP: {currentCharacter.experience} /{' '}
                           {currentCharacter.level * EXPERIENCE_PER_LEVEL}
@@ -166,7 +202,23 @@ export function GameHeader() {
                   </SheetTrigger>
                   <SheetContent>
                     <SheetHeader>
-                      <SheetTitle>Equipment</SheetTitle>
+                      <div className="flex items-center justify-between">
+                        <SheetTitle>Equipment</SheetTitle>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleRefreshGear}
+                          disabled={isRefreshing}
+                          className="gap-2"
+                        >
+                          <RefreshCw
+                            className={`h-4 w-4 ${
+                              isRefreshing ? 'animate-spin' : ''
+                            }`}
+                          />
+                          Refresh
+                        </Button>
+                      </div>
                       <SheetDescription>
                         Manage your character's equipment and gear
                       </SheetDescription>
@@ -218,7 +270,7 @@ export function GameHeader() {
             )}
           </div>
 
-          <WalletConnect minimal />
+          <AuthHeader />
         </div>
       </div>
     </div>

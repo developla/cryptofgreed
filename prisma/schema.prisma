@@ -9,8 +9,10 @@ datasource db {
 
 model User {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
-  walletAddress String    @unique
-  walletType    WalletType
+  walletAddress String?   @unique 
+  walletType    WalletType?
+  email         String?   @unique // Add email field
+  password      String?   // Add hashed password field
   characters    Character[]
   blockedFromBattles Boolean @default(false)
   createdAt     DateTime  @default(now())
