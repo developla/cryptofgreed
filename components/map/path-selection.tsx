@@ -177,8 +177,8 @@ export function PathSelection({
                   path.difficulty === 'ELITE'
                     ? 'bg-yellow-500/10 text-yellow-500'
                     : path.difficulty === 'BOSS'
-                      ? 'bg-red-500/10 text-red-500'
-                      : 'bg-primary/10 text-primary'
+                    ? 'bg-red-500/10 text-red-500'
+                    : 'bg-primary/10 text-primary'
                 )}
               >
                 <Icon className="h-6 w-6" />
@@ -192,8 +192,8 @@ export function PathSelection({
                       path.difficulty === 'ELITE'
                         ? 'text-yellow-500'
                         : path.difficulty === 'BOSS'
-                          ? 'text-red-500'
-                          : 'text-primary'
+                        ? 'text-red-500'
+                        : 'text-primary'
                     )}
                   >
                     {path.difficulty}

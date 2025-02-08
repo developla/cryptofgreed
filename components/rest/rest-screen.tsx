@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 
 export function RestScreen() {
   const router = useRouter();
-  const { currentCharacter, walletAddress } = useGameStore();
+  const { currentCharacter, walletAddress, setCharacter } = useGameStore();
   const [isResting, setIsResting] = useState(false);
 
   const handleRest = async () => {
@@ -31,6 +31,11 @@ export function RestScreen() {
 
       if (!response.ok) throw new Error('Failed to rest');
 
+      const { character } = await response.json();
+      
+      // Update character in store immediately
+      setCharacter(character);
+      
       toast.success('You feel refreshed!');
       router.push('/map');
     } catch (error) {
