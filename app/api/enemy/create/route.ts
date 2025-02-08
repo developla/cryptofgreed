@@ -6,7 +6,7 @@ export async function POST() {
   try {
     // Create all enemy templates in the database
     const enemies = await Promise.all(
-      Object.values(ENEMY_TEMPLATES).map(template => 
+      Object.values(ENEMY_TEMPLATES).map((template) =>
         prisma.enemy.create({
           data: {
             name: template.name,
@@ -16,8 +16,8 @@ export async function POST() {
             experienceReward: template.experienceReward,
             goldRewardMin: template.goldReward.min,
             goldRewardMax: template.goldReward.max,
-            moves: template.moves
-          }
+            moves: template.moves,
+          },
         })
       )
     );

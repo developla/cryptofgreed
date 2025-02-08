@@ -6,15 +6,12 @@ export async function POST(request: Request) {
   try {
     const user = await getAuthenticatedUser();
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     await prisma.user.update({
       where: { id: user.id },
-      data: { blockedFromBattles: true }
+      data: { blockedFromBattles: true },
     });
 
     return NextResponse.json({ success: true });

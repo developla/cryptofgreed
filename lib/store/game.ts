@@ -1,6 +1,13 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { CharacterClass, WalletType, CardType, Rarity, Effect } from '@prisma/client';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import {
+  CharacterClass,
+  WalletType,
+  CardType,
+  Rarity,
+  Effect,
+  EquipmentSlot,
+} from '@prisma/client';
 
 declare global {
   interface Window {
@@ -14,19 +21,20 @@ interface GameState {
   isConnected: boolean;
   walletAddress: string | null;
   walletType: WalletType | null;
-  
+
   // Game State
   currentCharacter: Character | null;
   inBattle: boolean;
   playerHand: Card[];
   playerDeck: Card[];
   playerDiscardPile: Card[];
-  
+  originalDeck: Card[];
+
   // Actions
   connectWallet: (address: string, type: WalletType) => void;
   disconnectWallet: () => void;
-  checkWalletConnection: () => void;
-  setCharacter: (character: Character) => void;
+  checkWalletConnection: () => Promise<boolean>;
+  setCharacter: (character: Character | null) => void;
   startBattle: () => void;
   endBattle: () => void;
   drawCard: () => void;
@@ -46,6 +54,7 @@ interface Character {
   maxEnergy: number;
   gold: number;
   deck?: Card[];
+  equipment?: Equipment[];
 }
 
 interface Card {
@@ -60,156 +69,181 @@ interface Card {
   effects?: Effect[];
 }
 
+interface Equipment {
+  id: string;
+  name: string;
+  description: string;
+  slot: EquipmentSlot;
+  rarity: Rarity;
+  effects: Effect[];
+}
+
+const initialState = {
+  isConnected: false,
+  walletAddress: null,
+  walletType: null,
+  currentCharacter: null,
+  inBattle: false,
+  playerHand: [],
+  playerDeck: [],
+  playerDiscardPile: [],
+  originalDeck: [],
+};
+
 export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
-      // Initial State
-      isConnected: false,
-      walletAddress: null,
-      walletType: null,
-      currentCharacter: null,
-      inBattle: false,
-      playerHand: [],
-      playerDeck: [],
-      playerDiscardPile: [],
-      
+      ...initialState,
+
       // Actions
-      connectWallet: (address, type) => set({ 
-        isConnected: true, 
-        walletAddress: address, 
-        walletType: type 
-      }),
-      
-      disconnectWallet: () => set({ 
-        isConnected: false, 
-        walletAddress: null, 
-        walletType: null,
-        currentCharacter: null,
-        inBattle: false,
-        playerHand: [],
-        playerDeck: [],
-        playerDiscardPile: []
-      }),
+      connectWallet: (address, type) =>
+        set({
+          isConnected: true,
+          walletAddress: address,
+          walletType: type,
+        }),
+
+      disconnectWallet: () => set(initialState),
 
       checkWalletConnection: async () => {
         const { walletType, walletAddress } = get();
-        if (!walletType || !walletAddress) return;
+        if (!walletType || !walletAddress) return false;
 
         try {
           let isStillConnected = false;
-          
-          if (walletType === WalletType.ETHEREUM) {
-            const address = await window.ethereum?.request({ method: 'eth_accounts' });
-            isStillConnected = address?.[0]?.toLowerCase() === walletAddress.toLowerCase();
-          } else if (walletType === WalletType.SOLANA) {
-            const phantom = (window as any).solana;
-            isStillConnected = phantom?.isConnected && phantom?.publicKey?.toString() === walletAddress;
+
+          if (walletType === WalletType.ETHEREUM && window.ethereum) {
+            const accounts = await window.ethereum.request({
+              method: 'eth_accounts',
+            });
+            isStillConnected =
+              accounts?.[0]?.toLowerCase() === walletAddress.toLowerCase();
+          } else if (walletType === WalletType.SOLANA && window.solana) {
+            isStillConnected =
+              window.solana.isConnected &&
+              window.solana.publicKey?.toString() === walletAddress;
           }
 
           if (!isStillConnected) {
-            set({ 
-              isConnected: false, 
-              walletAddress: null, 
-              walletType: null,
-              currentCharacter: null,
-              inBattle: false,
-              playerHand: [],
-              playerDeck: [],
-              playerDiscardPile: []
-            });
+            set(initialState);
+            return false;
           }
+
+          set({ isConnected: true });
+          return true;
         } catch (error) {
           console.error('Failed to check wallet connection:', error);
-          set({ 
-            isConnected: false, 
-            walletAddress: null, 
-            walletType: null,
-            currentCharacter: null,
-            inBattle: false,
-            playerHand: [],
-            playerDeck: [],
-            playerDiscardPile: []
-          });
+          set(initialState);
+          return false;
         }
       },
-      
-      setCharacter: (character) => set({ 
-        currentCharacter: character,
-        playerDeck: character.deck ? [...character.deck] : []
-      }),
-      
-      startBattle: () => {
-        const { currentCharacter } = get();
-        if (!currentCharacter?.deck) return;
 
-        // Shuffle the deck before starting battle
-        const shuffledDeck = [...currentCharacter.deck].sort(() => Math.random() - 0.5);
-        
-        set({ 
-          inBattle: true,
-          playerHand: [],
-          playerDeck: shuffledDeck,
-          playerDiscardPile: []
-        });
-      },
-      
-      endBattle: () => set({ 
-        inBattle: false,
-        playerHand: [],
-        playerDeck: [],
-        playerDiscardPile: []
-      }),
-      
-      drawCard: () => {
-        const { playerDeck, playerHand, playerDiscardPile } = get();
-        
-        if (playerDeck.length === 0) {
-          if (playerDiscardPile.length === 0) return;
-          
-          // Shuffle discard pile into deck
-          const shuffledDeck = [...playerDiscardPile]
-            .sort(() => Math.random() - 0.5);
-          
-          set({ 
-            playerDeck: shuffledDeck,
-            playerDiscardPile: []
+      setCharacter: (character) => {
+        if (!character) {
+          set({
+            currentCharacter: null,
+            playerDeck: [],
+            originalDeck: [],
           });
           return;
         }
-        
-        const newDeck = [...playerDeck];
-        const drawnCard = newDeck.pop()!;
-        
+
+        // Store both the current deck and original deck
+        const deck = character.deck || [];
         set({
-          playerDeck: newDeck,
-          playerHand: [...playerHand, drawnCard]
+          currentCharacter: character,
+          playerDeck: [...deck],
+          originalDeck: [...deck],
         });
       },
-      
+
+      startBattle: () => {
+        const { originalDeck } = get();
+        if (!originalDeck.length) return;
+
+        // Create a fresh shuffled deck from the original deck
+        const shuffledDeck = [...originalDeck].sort(() => Math.random() - 0.5);
+
+        set({
+          inBattle: true,
+          playerHand: [],
+          playerDeck: shuffledDeck,
+          playerDiscardPile: [],
+        });
+      },
+
+      endBattle: () => {
+        set({
+          inBattle: false,
+          playerHand: [],
+          playerDeck: [],
+          playerDiscardPile: [],
+        });
+      },
+
+      drawCard: () => {
+        const { playerDeck, playerHand, playerDiscardPile, originalDeck } = get();
+
+        // If deck is empty, check discard pile
+        if (playerDeck.length === 0) {
+          // If discard pile is also empty, reset from original deck
+          if (playerDiscardPile.length === 0) {
+            if (originalDeck.length === 0) return;
+
+            const shuffledDeck = [...originalDeck].sort(() => Math.random() - 0.5);
+            set({
+              playerDeck: shuffledDeck.slice(1),
+              playerHand: [...playerHand, shuffledDeck[0]],
+            });
+            return;
+          }
+
+          // Shuffle discard pile into new deck
+          const shuffledDeck = [...playerDiscardPile].sort(
+            () => Math.random() - 0.5
+          );
+          set({
+            playerDeck: shuffledDeck.slice(1),
+            playerHand: [...playerHand, shuffledDeck[0]],
+            playerDiscardPile: [],
+          });
+          return;
+        }
+
+        // Draw from current deck
+        const newDeck = [...playerDeck];
+        const drawnCard = newDeck.pop()!;
+        set({
+          playerDeck: newDeck,
+          playerHand: [...playerHand, drawnCard],
+        });
+      },
+
       playCard: (cardIndex) => {
         const { playerHand, playerDiscardPile } = get();
         const playedCard = playerHand[cardIndex];
-        
+
         set({
           playerHand: playerHand.filter((_, i) => i !== cardIndex),
-          playerDiscardPile: [...playerDiscardPile, playedCard]
+          playerDiscardPile: [...playerDiscardPile, playedCard],
         });
       },
-      
+
       discardHand: () => {
         const { playerHand, playerDiscardPile } = get();
         set({
           playerHand: [],
-          playerDiscardPile: [...playerDiscardPile, ...playerHand]
+          playerDiscardPile: [...playerDiscardPile, ...playerHand],
         });
-      }
+      },
     }),
     {
       name: 'game-storage',
+      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        isConnected: state.isConnected,
         walletAddress: state.walletAddress,
         walletType: state.walletType,
+        isConnected: state.isConnected,
       }),
     }
   )
