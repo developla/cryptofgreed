@@ -9,10 +9,7 @@ export function middleware(request: NextRequest) {
 
   const walletAddress = request.headers.get('x-wallet-address');
   if (!walletAddress) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   // Clone the headers to modify them

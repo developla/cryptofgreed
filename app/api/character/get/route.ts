@@ -6,30 +6,24 @@ export async function GET() {
   try {
     const user = await getAuthenticatedUser();
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get the user's character with their deck
-    const character = await prisma.character.findFirst({
+    // Get all characters for the user
+    const characters = await prisma.character.findMany({
       where: { userId: user.id },
       include: {
         deck: true,
         equipment: true,
       },
+      orderBy: { createdAt: 'desc' },
     });
 
-    if (!character) {
-      return NextResponse.json({ character: null });
-    }
-
-    return NextResponse.json({ character });
+    return NextResponse.json({ characters });
   } catch (error) {
-    console.error('Failed to get character:', error);
+    console.error('Failed to get characters:', error);
     return NextResponse.json(
-      { error: 'Failed to get character' },
+      { error: 'Failed to get characters' },
       { status: 500 }
     );
   }

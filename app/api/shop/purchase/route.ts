@@ -6,7 +6,7 @@ import { CardType, Rarity, EquipmentSlot } from '@prisma/client';
 interface ShopCardItem {
   name: string;
   description: string;
-  type: "CARD";
+  type: 'CARD';
   cardType: CardType;
   cost: number;
   rarity: Rarity;
@@ -16,7 +16,7 @@ interface ShopCardItem {
 interface ShopEquipmentItem {
   name: string;
   description: string;
-  type: "EQUIPMENT";
+  type: 'EQUIPMENT';
   slot: EquipmentSlot;
   cost: number;
   rarity: Rarity;
@@ -26,51 +26,45 @@ interface ShopEquipmentItem {
 type ShopItem = ShopCardItem | ShopEquipmentItem;
 
 const SHOP_ITEMS: Record<string, ShopItem> = {
-  "1": {
-    name: "Heavy Strike",
-    description: "Deal 12 damage",
-    type: "CARD",
-    cardType: "ATTACK",
+  '1': {
+    name: 'Heavy Strike',
+    description: 'Deal 12 damage',
+    type: 'CARD',
+    cardType: 'ATTACK',
     cost: 100,
-    rarity: "UNCOMMON",
-    damage: 12
+    rarity: 'UNCOMMON',
+    damage: 12,
   },
-  "2": {
-    name: "Iron Helmet",
-    description: "+5 Max HP",
-    type: "EQUIPMENT",
-    slot: "HEAD",
+  '2': {
+    name: 'Iron Helmet',
+    description: '+5 Max HP',
+    type: 'EQUIPMENT',
+    slot: 'HEAD',
     cost: 150,
-    rarity: "COMMON",
-    effects: [{ type: "MAX_HP", value: 5 }]
-  }
+    rarity: 'COMMON',
+    effects: [{ type: 'MAX_HP', value: 5 }],
+  },
 };
 
 export async function POST(request: Request) {
   try {
     const user = await getAuthenticatedUser();
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { characterId, itemId, type } = await request.json();
     const item = SHOP_ITEMS[itemId];
-    
+
     if (!item) {
-      return NextResponse.json(
-        { error: 'Item not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
 
     const character = await prisma.character.findFirst({
       where: {
         id: characterId,
-        userId: user.id
-      }
+        userId: user.id,
+      },
     });
 
     if (!character) {
@@ -81,10 +75,7 @@ export async function POST(request: Request) {
     }
 
     if (character.gold < item.cost) {
-      return NextResponse.json(
-        { error: 'Not enough gold' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Not enough gold' }, { status: 400 });
     }
 
     // Start a transaction to handle the purchase
@@ -92,7 +83,7 @@ export async function POST(request: Request) {
       // Deduct gold
       const updatedCharacter = await tx.character.update({
         where: { id: characterId },
-        data: { gold: { decrement: item.cost } }
+        data: { gold: { decrement: item.cost } },
       });
 
       if (item.type === 'CARD') {
@@ -106,8 +97,8 @@ export async function POST(request: Request) {
             rarity: item.rarity,
             energy: 2,
             damage: item.damage,
-            effects: []
-          }
+            effects: [],
+          },
         });
       } else {
         // Add equipment to character
@@ -118,8 +109,8 @@ export async function POST(request: Request) {
             description: item.description,
             slot: item.slot,
             rarity: item.rarity,
-            effects: item.effects
-          }
+            effects: item.effects,
+          },
         });
       }
 

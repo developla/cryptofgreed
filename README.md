@@ -5,6 +5,7 @@ A Web3-powered roguelike deck-building game where players can create characters,
 ## Tech Stack
 
 ### Frontend
+
 - Next.js 13.5 (App Router)
 - React 18
 - TypeScript
@@ -14,16 +15,19 @@ A Web3-powered roguelike deck-building game where players can create characters,
 - Lucide React (Icons)
 
 ### Web3 Integration
+
 - Wagmi (Ethereum Integration)
 - @solana/web3.js (Solana Integration)
 - Multi-chain Support (Ethereum & Solana)
 
 ### Backend
+
 - MongoDB (via Prisma ORM)
 - Next.js API Routes
 - Prisma Client
 
 ### Development Tools
+
 - ESLint
 - TypeScript
 - Prettier
@@ -31,11 +35,13 @@ A Web3-powered roguelike deck-building game where players can create characters,
 ## Current Features
 
 ### Authentication
+
 - Web3 Wallet Connection (MetaMask & Phantom)
 - Persistent Authentication State
 - Wallet-based User Accounts
 
 ### Character System
+
 - Character Creation with Multiple Classes:
   - Warrior (High HP, Defensive Abilities)
   - Mage (Powerful Spells, High Energy)
@@ -45,6 +51,7 @@ A Web3-powered roguelike deck-building game where players can create characters,
 - Health & Energy Management
 
 ### Combat System
+
 - Turn-based Card Combat
 - Deck Building Mechanics
 - Energy Management
@@ -54,6 +61,7 @@ A Web3-powered roguelike deck-building game where players can create characters,
 - Experience & Gold Rewards
 
 ### Game Map
+
 - Node-based Progression
 - Multiple Node Types:
   - Battle Encounters
@@ -63,47 +71,55 @@ A Web3-powered roguelike deck-building game where players can create characters,
 - Branching Paths
 
 ### Shop System
+
 - Purchase Cards & Equipment
 - Multiple Item Rarities
 - Gold-based Economy
 
 ### Rest System
+
 - Health Recovery
 - Resource Management
 
 ## Upcoming Features
 
 ### Combat Enhancements
+
 - More Card Types & Effects
 - Combo System
 - Elite Enemies & Bosses
 - Special Abilities per Class
 
 ### Progression
+
 - Talent Trees
 - Achievement System
 - Character Specializations
 - Multiple Save Slots
 
 ### Items & Equipment
+
 - Equipment System Expansion
 - Crafting System
 - Item Rarities & Effects
 - Inventory Management
 
 ### Social Features
+
 - Leaderboards
 - PvP Battles
 - Trading System
 - Guilds/Clans
 
 ### Blockchain Features
+
 - NFT Integration
 - Token Rewards
 - On-chain Achievements
 - Cross-chain Assets
 
 ### Content
+
 - New Character Classes
 - More Enemy Types
 - Additional Card Sets
@@ -115,14 +131,19 @@ A Web3-powered roguelike deck-building game where players can create characters,
 
 1. Clone the repository
 2. Install dependencies:
+
 ```bash
 npm install
 ```
+
 3. Set up environment variables:
+
 ```env
 DATABASE_URL="your_mongodb_url"
 ```
+
 4. Run the development server:
+
 ```bash
 npm run dev
 ```

@@ -34,6 +34,8 @@ model Character {
   equipment     Equipment[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  Battle Battle[]
 }
 
 model Card {
@@ -125,4 +127,21 @@ type Move {
   block       Int?
   effects     Effect[]
   weight      Int
+}
+
+model Battle {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  characterId   String    @db.ObjectId
+  character     Character @relation(fields: [characterId], references: [id])
+  enemyId       String    @db.ObjectId
+  battleState   Json
+  turnNumber    Int       @default(1)
+  playerDeck    Json
+  playerHand    Json
+  playerDiscardPile Json
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([characterId, active])
 }

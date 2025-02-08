@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { Sword } from "lucide-react";
+import { Sword } from 'lucide-react';
 
 export function GameTitle() {
   return (
-    <div className="text-center mb-8">
-      <div className="flex items-center justify-center mb-4">
-        <Sword className="w-12 h-12 text-primary animate-pulse" />
+    <div className="mb-8 text-center">
+      <div className="mb-4 flex items-center justify-center">
+        <Sword className="h-12 w-12 animate-pulse text-primary" />
       </div>
-      <h1 className="text-4xl font-bold tracking-tight text-primary mb-2">
-         Project Gamify
+      <h1 className="mb-2 text-4xl font-bold tracking-tight text-primary">
+        Project Gamify
       </h1>
       <p className="text-muted-foreground">
         A Web3-powered roguelike deck-building adventure

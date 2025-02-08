@@ -23,15 +23,15 @@ export function calculateDamage(
   defenderBlock: number
 ): { damage: number; remainingBlock: number } {
   let multiplier = 1;
-  
+
   // Apply attacker effects
-  const strength = attackerEffects.find(e => e.type === 'STRENGTH');
+  const strength = attackerEffects.find((e) => e.type === 'STRENGTH');
   if (strength) {
     multiplier += strength.value * 0.1;
   }
 
   // Apply defender effects
-  const weak = defenderEffects.find(e => e.type === 'WEAK');
+  const weak = defenderEffects.find((e) => e.type === 'WEAK');
   if (weak) {
     multiplier *= 0.75;
   }
@@ -58,7 +58,7 @@ export function applyCardEffects(
 ): BattleState {
   const newState = { ...battleState };
 
-  effects.forEach(effect => {
+  effects.forEach((effect) => {
     switch (effect.type) {
       case 'BLOCK':
         if (isPlayer) {
@@ -71,14 +71,14 @@ export function applyCardEffects(
       case 'DEXTERITY':
       case 'WEAK':
       case 'VULNERABLE':
-        const target = isPlayer ? 
-          newState.playerEffects : 
-          newState.enemyEffects;
-        
+        const target = isPlayer
+          ? newState.playerEffects
+          : newState.enemyEffects;
+
         target.push({
           type: effect.type,
           value: effect.value,
-          duration: effect.duration || 1
+          duration: effect.duration || 1,
         });
         break;
     }

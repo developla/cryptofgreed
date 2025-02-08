@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "../ui/button";
-import { Card } from "../ui/card";
-import { useGameStore } from "@/lib/store/game";
-import { Heart, Swords } from "lucide-react";
-import { toast } from "sonner";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { useGameStore } from '@/lib/store/game';
+import { Heart, Swords } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function RestScreen() {
   const router = useRouter();
@@ -15,34 +15,34 @@ export function RestScreen() {
 
   const handleRest = async () => {
     if (!currentCharacter || !walletAddress) return;
-    
+
     setIsResting(true);
     try {
-      const response = await fetch("/api/character/rest", {
-        method: "POST",
+      const response = await fetch('/api/character/rest', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          "x-wallet-address": walletAddress
+          'Content-Type': 'application/json',
+          'x-wallet-address': walletAddress,
         },
         body: JSON.stringify({
-          characterId: currentCharacter.id
-        })
+          characterId: currentCharacter.id,
+        }),
       });
 
-      if (!response.ok) throw new Error("Failed to rest");
+      if (!response.ok) throw new Error('Failed to rest');
 
-      toast.success("You feel refreshed!");
-      router.push("/map");
+      toast.success('You feel refreshed!');
+      router.push('/map');
     } catch (error) {
-      console.error("Rest error:", error);
-      toast.error("Failed to rest");
+      console.error('Rest error:', error);
+      toast.error('Failed to rest');
     } finally {
       setIsResting(false);
     }
   };
 
   const handleContinue = () => {
-    router.push("/map");
+    router.push('/map');
   };
 
   if (!currentCharacter) return null;
@@ -51,41 +51,46 @@ export function RestScreen() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background/90 to-background p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Rest Site</h1>
+      <div className="mx-auto max-w-4xl">
+        <h1 className="mb-8 text-3xl font-bold">Rest Site</h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           <Card className="p-6">
-            <div className="flex items-center gap-4 mb-4">
-              <Heart className="w-8 h-8 text-red-500" />
+            <div className="mb-4 flex items-center gap-4">
+              <Heart className="h-8 w-8 text-red-500" />
               <div>
-                <h3 className="font-bold text-lg">Rest</h3>
+                <h3 className="text-lg font-bold">Rest</h3>
                 <p className="text-sm text-muted-foreground">
-                  Heal {healAmount} HP ({Math.floor((healAmount / currentCharacter.maxHealth) * 100)}% of max HP)
+                  Heal {healAmount} HP (
+                  {Math.floor((healAmount / currentCharacter.maxHealth) * 100)}%
+                  of max HP)
                 </p>
               </div>
             </div>
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               onClick={handleRest}
-              disabled={isResting || currentCharacter.health === currentCharacter.maxHealth}
+              disabled={
+                isResting ||
+                currentCharacter.health === currentCharacter.maxHealth
+              }
             >
               Rest
             </Button>
           </Card>
 
           <Card className="p-6">
-            <div className="flex items-center gap-4 mb-4">
-              <Swords className="w-8 h-8 text-blue-500" />
+            <div className="mb-4 flex items-center gap-4">
+              <Swords className="h-8 w-8 text-blue-500" />
               <div>
-                <h3 className="font-bold text-lg">Continue</h3>
+                <h3 className="text-lg font-bold">Continue</h3>
                 <p className="text-sm text-muted-foreground">
                   Skip resting and continue your journey
                 </p>
               </div>
             </div>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full"
               onClick={handleContinue}
             >
@@ -95,7 +100,7 @@ export function RestScreen() {
         </div>
 
         <div className="mt-8">
-          <h2 className="text-xl font-bold mb-4">Current Status</h2>
+          <h2 className="mb-4 text-xl font-bold">Current Status</h2>
           <div className="flex gap-4">
             <Card className="p-4">
               <p className="text-sm text-muted-foreground">Health</p>

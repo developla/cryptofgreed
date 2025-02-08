@@ -3,7 +3,7 @@ export async function connectPhantom(): Promise<string | null> {
     const { solana } = window as any;
 
     if (!solana?.isPhantom) {
-      throw new Error("Phantom wallet not found!");
+      throw new Error('Phantom wallet not found!');
     }
 
     // Request connection
@@ -11,17 +11,17 @@ export async function connectPhantom(): Promise<string | null> {
     const address = resp.publicKey.toString();
 
     // Add event listeners
-    solana.on("accountChanged", () => {
+    solana.on('accountChanged', () => {
       window.location.reload();
     });
 
-    solana.on("disconnect", () => {
+    solana.on('disconnect', () => {
       window.location.reload();
     });
 
     return address;
   } catch (error) {
-    console.error("Phantom connection error:", error);
+    console.error('Phantom connection error:', error);
     return null;
   }
 }

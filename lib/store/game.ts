@@ -1,12 +1,12 @@
-import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import {
   CharacterClass,
   WalletType,
   CardType,
   Rarity,
   Effect,
-} from "@prisma/client";
+} from '@prisma/client';
 
 declare global {
   interface Window {
@@ -32,7 +32,7 @@ interface GameState {
   connectWallet: (address: string, type: WalletType) => void;
   disconnectWallet: () => void;
   checkWalletConnection: () => Promise<boolean>;
-  setCharacter: (character: Character) => void;
+  setCharacter: (character: Character | null) => void;
   startBattle: () => void;
   endBattle: () => void;
   drawCard: () => void;
@@ -66,18 +66,21 @@ interface Card {
   effects?: Effect[];
 }
 
+const initialState = {
+  isConnected: false,
+  walletAddress: null,
+  walletType: null,
+  currentCharacter: null,
+  inBattle: false,
+  playerHand: [],
+  playerDeck: [],
+  playerDiscardPile: [],
+};
+
 export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
-      // Initial State
-      isConnected: false,
-      walletAddress: null,
-      walletType: null,
-      currentCharacter: null,
-      inBattle: false,
-      playerHand: [],
-      playerDeck: [],
-      playerDiscardPile: [],
+      ...initialState,
 
       // Actions
       connectWallet: (address, type) =>
@@ -87,17 +90,7 @@ export const useGameStore = create<GameState>()(
           walletType: type,
         }),
 
-      disconnectWallet: () =>
-        set({
-          isConnected: false,
-          walletAddress: null,
-          walletType: null,
-          currentCharacter: null,
-          inBattle: false,
-          playerHand: [],
-          playerDeck: [],
-          playerDiscardPile: [],
-        }),
+      disconnectWallet: () => set(initialState),
 
       checkWalletConnection: async () => {
         const { walletType, walletAddress } = get();
@@ -108,7 +101,7 @@ export const useGameStore = create<GameState>()(
 
           if (walletType === WalletType.ETHEREUM && window.ethereum) {
             const accounts = await window.ethereum.request({
-              method: "eth_accounts",
+              method: 'eth_accounts',
             });
             isStillConnected =
               accounts?.[0]?.toLowerCase() === walletAddress.toLowerCase();
@@ -119,33 +112,15 @@ export const useGameStore = create<GameState>()(
           }
 
           if (!isStillConnected) {
-            set({
-              isConnected: false,
-              walletAddress: null,
-              walletType: null,
-              currentCharacter: null,
-              inBattle: false,
-              playerHand: [],
-              playerDeck: [],
-              playerDiscardPile: [],
-            });
+            set(initialState);
             return false;
           }
 
           set({ isConnected: true });
           return true;
         } catch (error) {
-          console.error("Failed to check wallet connection:", error);
-          set({
-            isConnected: false,
-            walletAddress: null,
-            walletType: null,
-            currentCharacter: null,
-            inBattle: false,
-            playerHand: [],
-            playerDeck: [],
-            playerDiscardPile: [],
-          });
+          console.error('Failed to check wallet connection:', error);
+          set(initialState);
           return false;
         }
       },
@@ -153,7 +128,7 @@ export const useGameStore = create<GameState>()(
       setCharacter: (character) =>
         set({
           currentCharacter: character,
-          playerDeck: character.deck ? [...character.deck] : [],
+          playerDeck: character?.deck ? [...character.deck] : [],
         }),
 
       startBattle: () => {
@@ -225,7 +200,7 @@ export const useGameStore = create<GameState>()(
       },
     }),
     {
-      name: "game-storage",
+      name: 'game-storage',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         walletAddress: state.walletAddress,

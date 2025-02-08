@@ -12,10 +12,7 @@ export async function GET(request: Request) {
     const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)];
 
     if (!randomEnemy) {
-      return NextResponse.json(
-        { error: 'No enemies found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'No enemies found' }, { status: 404 });
     }
 
     // Scale enemy based on level
@@ -24,9 +21,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ enemy: scaledEnemy });
   } catch (error) {
     console.error('Failed to get enemy:', error);
-    return NextResponse.json(
-      { error: 'Failed to get enemy' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to get enemy' }, { status: 500 });
   }
 }

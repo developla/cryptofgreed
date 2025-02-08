@@ -1,85 +1,89 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '../ui/card';
+import { Button } from '../ui/button';
 import { useGameStore } from '@/lib/store/game';
 import { toast } from 'sonner';
 import { MapNodeComponent, type MapNode } from './map-node';
+import { Users } from 'lucide-react';
 
 // Generate a simple branching path
 function generateMap(): MapNode[] {
   return [
-    { 
-      id: '1', 
-      type: 'BATTLE', 
-      x: 100, 
-      y: 300, 
+    {
+      id: '1',
+      type: 'BATTLE',
+      x: 100,
+      y: 300,
       connections: ['2', '3'],
       isAccessible: true,
-      isCompleted: false
+      isCompleted: false,
     },
-    { 
-      id: '2', 
-      type: 'MERCHANT', 
-      x: 300, 
-      y: 200, 
+    {
+      id: '2',
+      type: 'MERCHANT',
+      x: 300,
+      y: 200,
       connections: ['4'],
       isAccessible: false,
-      isCompleted: false
+      isCompleted: false,
     },
-    { 
-      id: '3', 
-      type: 'REST', 
-      x: 300, 
-      y: 400, 
+    {
+      id: '3',
+      type: 'REST',
+      x: 300,
+      y: 400,
       connections: ['4'],
       isAccessible: false,
-      isCompleted: false
+      isCompleted: false,
     },
-    { 
-      id: '4', 
-      type: 'EVENT', 
-      x: 500, 
-      y: 300, 
+    {
+      id: '4',
+      type: 'EVENT',
+      x: 500,
+      y: 300,
       connections: ['5', '6'],
       isAccessible: false,
-      isCompleted: false
+      isCompleted: false,
     },
-    { 
-      id: '5', 
-      type: 'MERCHANT', 
-      x: 700, 
-      y: 200, 
+    {
+      id: '5',
+      type: 'MERCHANT',
+      x: 700,
+      y: 200,
       connections: ['7'],
       isAccessible: false,
-      isCompleted: false
+      isCompleted: false,
     },
-    { 
-      id: '6', 
-      type: 'BATTLE', 
-      x: 700, 
-      y: 400, 
+    {
+      id: '6',
+      type: 'BATTLE',
+      x: 700,
+      y: 400,
       connections: ['7'],
       isAccessible: false,
-      isCompleted: false
+      isCompleted: false,
     },
-    { 
-      id: '7', 
-      type: 'BATTLE', 
-      x: 900, 
-      y: 300, 
+    {
+      id: '7',
+      type: 'BATTLE',
+      x: 900,
+      y: 300,
       connections: [],
       isAccessible: false,
-      isCompleted: false
+      isCompleted: false,
     },
   ];
 }
 
 export function MapScreen() {
-  const { currentCharacter, isConnected } = useGameStore();
+  const { currentCharacter, isConnected, walletAddress, setCharacter } =
+    useGameStore();
   const router = useRouter();
   const [nodes, setNodes] = useState<MapNode[]>(() => generateMap());
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!isConnected || !currentCharacter) {
@@ -87,20 +91,23 @@ export function MapScreen() {
     }
   }, [isConnected, currentCharacter, router]);
 
-  const updateAccessibleNodes = (currentNodes: MapNode[], completedNodeId: string) => {
-    return currentNodes.map(node => {
+  const updateAccessibleNodes = (
+    currentNodes: MapNode[],
+    completedNodeId: string
+  ) => {
+    return currentNodes.map((node) => {
       if (node.id === completedNodeId) {
         return { ...node, isCompleted: true };
       }
-      
-      // A node is accessible if it's connected to a completed node
-      const isNowAccessible = currentNodes
-        .some(n => n.isCompleted && n.connections.includes(node.id));
-      
+
+      const isNowAccessible = currentNodes.some(
+        (n) => n.isCompleted && n.connections.includes(node.id)
+      );
+
       if (isNowAccessible && !node.isAccessible) {
         return { ...node, isAccessible: true };
       }
-      
+
       return node;
     });
   };
@@ -123,13 +130,37 @@ export function MapScreen() {
         router.push('/rest');
         break;
       case 'EVENT':
-        // TODO: Implement random events
         toast.info('Events coming soon!');
         break;
     }
 
-    // Update node accessibility after interaction
-    setNodes(prev => updateAccessibleNodes(prev, node.id));
+    setNodes((prev) => updateAccessibleNodes(prev, node.id));
+  };
+
+  const handleSwitchCharacter = async () => {
+    if (!walletAddress) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/character/get', {
+        headers: {
+          'x-wallet-address': walletAddress,
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch characters');
+
+      const { characters } = await response.json();
+      if (characters.length > 0) {
+        setCharacter(null); // Clear current character
+        router.push('/'); // Go to character selection
+      }
+    } catch (error) {
+      console.error('Failed to switch character:', error);
+      toast.error('Failed to load characters');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!currentCharacter) {
@@ -138,32 +169,27 @@ export function MapScreen() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background/90 to-background p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">The Crypto Spire</h1>
-          <div className="flex items-center gap-4">
-            <Card className="p-4">
-              <p className="text-sm text-muted-foreground">Character</p>
-              <p className="font-bold">{currentCharacter.name}</p>
-              <p className="text-sm">Level {currentCharacter.level}</p>
-            </Card>
-            <Card className="p-4">
-              <p className="text-sm text-muted-foreground">Gold</p>
-              <p className="font-bold">{currentCharacter.gold}</p>
-            </Card>
-            <Card className="p-4">
-              <p className="text-sm text-muted-foreground">Health</p>
-              <p className="font-bold">{currentCharacter.health}/{currentCharacter.maxHealth}</p>
-            </Card>
-          </div>
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-8 flex items-center justify-between">
+          <h1 className="text-3xl font-bold">The Crypto Spire</h1>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSwitchCharacter}
+            disabled={isLoading}
+            className="gap-2"
+          >
+            <Users className="h-4 w-4" />
+            Switch Character
+          </Button>
         </div>
 
-        <div className="relative w-full h-[600px] border rounded-lg p-4">
+        <div className="relative h-[600px] w-full rounded-lg border p-4">
           {/* Draw connections */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none">
-            {nodes.map(node =>
-              node.connections.map(targetId => {
-                const target = nodes.find(n => n.id === targetId);
+          <svg className="pointer-events-none absolute inset-0 h-full w-full">
+            {nodes.map((node) =>
+              node.connections.map((targetId) => {
+                const target = nodes.find((n) => n.id === targetId);
                 if (!target) return null;
                 return (
                   <line
@@ -182,7 +208,7 @@ export function MapScreen() {
           </svg>
 
           {/* Draw nodes */}
-          {nodes.map(node => (
+          {nodes.map((node) => (
             <MapNodeComponent
               key={node.id}
               node={node}
