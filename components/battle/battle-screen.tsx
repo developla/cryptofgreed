@@ -6,13 +6,14 @@ import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { Progress } from "../ui/progress";
 import { useGameStore } from "@/lib/store/game";
-import { Shield, Sword } from "lucide-react";
+import { Shield } from "lucide-react";
 import { toast } from "sonner";
 import { type EnemyTemplate } from "@/lib/game/enemies";
 import {
   calculateDamage,
   applyCardEffects,
   type BattleState,
+  type StatusEffect,
 } from "@/lib/game/battle";
 
 export function BattleScreen() {
@@ -27,13 +28,13 @@ export function BattleScreen() {
     discardHand,
     endBattle,
     startBattle,
-    walletAddress
+    walletAddress,
   } = useGameStore();
 
   const [battleState, setBattleState] = useState<BattleState>({
-    playerHealth: currentCharacter?.health || 0,
+    playerHealth: 0,
     playerBlock: 0,
-    playerEnergy: currentCharacter?.maxEnergy || 0,
+    playerEnergy: 0,
     playerEffects: [],
     enemyHealth: 0,
     enemyBlock: 0,
@@ -41,8 +42,9 @@ export function BattleScreen() {
   });
 
   const [currentEnemy, setCurrentEnemy] = useState<EnemyTemplate | null>(null);
-  const [enemyIntent, setEnemyIntent] = useState<string>("");
+  const [enemyIntent, setEnemyIntent] = useState("");
   const [currentMove, setCurrentMove] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!currentCharacter || !walletAddress) {
@@ -52,25 +54,30 @@ export function BattleScreen() {
 
     const initializeBattle = async () => {
       try {
+        setIsLoading(true);
         // Fetch a scaled enemy based on character level
         const response = await fetch(
           `/api/enemy/get?level=${currentCharacter.level}`,
           {
             headers: {
-              'x-wallet-address': walletAddress
-            }
+              "x-wallet-address": walletAddress,
+            },
           }
         );
+
         if (!response.ok) throw new Error("Failed to fetch enemy");
 
         const { enemy } = await response.json();
         setCurrentEnemy(enemy);
-        setBattleState((prev) => ({
-          ...prev,
+        setBattleState({
           playerHealth: currentCharacter.health,
+          playerBlock: 0,
           playerEnergy: currentCharacter.maxEnergy,
+          playerEffects: [],
           enemyHealth: enemy.health,
-        }));
+          enemyBlock: 0,
+          enemyEffects: [],
+        });
 
         // Start battle and draw initial hand
         startBattle();
@@ -83,6 +90,8 @@ export function BattleScreen() {
         console.error("Failed to initialize battle:", error);
         toast.error("Failed to start battle");
         router.push("/map");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -156,7 +165,7 @@ export function BattleScreen() {
 
     // Check for victory after state update
     if (newState.enemyHealth <= 0) {
-      handleVictory();
+      await handleVictory();
     }
   };
 
@@ -236,7 +245,7 @@ export function BattleScreen() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-wallet-address": walletAddress
+          "x-wallet-address": walletAddress,
         },
         body: JSON.stringify({
           characterId: currentCharacter.id,
@@ -262,17 +271,18 @@ export function BattleScreen() {
 
   const handleDefeat = async () => {
     if (!walletAddress) return;
-    
+
     try {
-      // Block the user from further battles
       await fetch("/api/character/block", {
         method: "POST",
         headers: {
-          "x-wallet-address": walletAddress
+          "x-wallet-address": walletAddress,
         },
       });
 
-      toast.error("Defeat! Your character has been blocked from further battles.");
+      toast.error(
+        "Defeat! Your character has been blocked from further battles."
+      );
       endBattle();
       router.push("/map");
     } catch (error) {
@@ -280,6 +290,19 @@ export function BattleScreen() {
       toast.error("Failed to update character status");
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background/90 to-background p-4 flex items-center justify-center">
+        <Card className="p-8">
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-primary/20 rounded w-3/4"></div>
+            <div className="h-8 bg-primary/10 rounded"></div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   if (!currentCharacter || !currentEnemy) {
     return null;
@@ -314,7 +337,9 @@ export function BattleScreen() {
           <div>
             <h2 className="text-xl font-bold">{currentCharacter.name}</h2>
             <Progress
-              value={(battleState.playerHealth / currentCharacter.maxHealth) * 100}
+              value={
+                (battleState.playerHealth / currentCharacter.maxHealth) * 100
+              }
               className="w-48"
             />
             <div className="text-sm text-muted-foreground">
@@ -327,7 +352,7 @@ export function BattleScreen() {
               <span>{battleState.playerBlock}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-black">
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
                 {battleState.playerEnergy}
               </div>
               <span className="text-sm text-muted-foreground">Energy</span>
@@ -339,7 +364,7 @@ export function BattleScreen() {
         <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
           {playerHand.map((card, index) => (
             <Card
-              key={card.id}
+              key={index}
               className="p-2 w-32 shrink-0 cursor-pointer hover:bg-primary/10 transition-colors"
               onClick={() => handlePlayCard(index)}
             >
