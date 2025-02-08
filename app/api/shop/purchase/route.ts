@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { verifyAuth } from '@/lib/auth';
 import { CardType, Rarity, EquipmentSlot } from '@prisma/client';
 
 interface ShopCardItem {
@@ -48,54 +48,28 @@ const SHOP_ITEMS: Record<string, ShopItem> = {
 
 export async function POST(request: Request) {
   try {
-    const user = await getAuthenticatedUser();
+    const user = await verifyAuth(request);
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized - Invalid or missing authentication' },
+        { status: 401 }
+      );
     }
 
-    const { characterId, itemId, type } = await request.json();
+    const { characterId, itemId } = await request.json();
     const item = SHOP_ITEMS[itemId];
 
     if (!item) {
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
 
-    const character = await prisma.character.findFirst({
-      where: {
-        id: characterId,
-        userId: user.id,
-      },
-      include: {
-        deck: true,
-        equipment: true,
-      },
-    });
-
-    if (!character) {
-      return NextResponse.json(
-        { error: 'Character not found' },
-        { status: 404 }
-      );
-    }
-
-    if (character.gold < item.cost) {
-      return NextResponse.json({ error: 'Not enough gold' }, { status: 400 });
-    }
-
     // Start a transaction to handle the purchase
     const result = await prisma.$transaction(async (tx) => {
-      // Deduct gold
-      const updatedCharacter = await tx.character.update({
-        where: { id: characterId },
-        data: { 
-          gold: { decrement: item.cost },
-          // Update maxHealth if equipment provides HP bonus
-          ...(item.type === 'EQUIPMENT' && 
-              item.effects.some(e => e.type === 'MAX_HP') && {
-            maxHealth: {
-              increment: item.effects.find(e => e.type === 'MAX_HP')?.value || 0
-            }
-          })
+      // Get character with current state
+      const character = await tx.character.findFirst({
+        where: {
+          id: characterId,
+          userId: user.id,
         },
         include: {
           deck: true,
@@ -103,8 +77,35 @@ export async function POST(request: Request) {
         },
       });
 
+      if (!character) {
+        throw new Error('Character not found');
+      }
+
+      if (character.gold < item.cost) {
+        throw new Error('Not enough gold');
+      }
+
+      // Update character gold and stats
+      const updatedCharacter = await tx.character.update({
+        where: { id: characterId },
+        data: {
+          gold: { decrement: item.cost },
+          ...(item.type === 'EQUIPMENT' &&
+            item.effects.some((e) => e.type === 'MAX_HP') && {
+              maxHealth: {
+                increment:
+                  item.effects.find((e) => e.type === 'MAX_HP')?.value || 0,
+              },
+            }),
+        },
+        include: {
+          deck: true,
+          equipment: true,
+        },
+      });
+
+      // Create the purchased item
       if (item.type === 'CARD') {
-        // Add card to character's deck
         await tx.card.create({
           data: {
             characterId,
@@ -118,7 +119,6 @@ export async function POST(request: Request) {
           },
         });
       } else {
-        // Add equipment to character
         await tx.equipment.create({
           data: {
             characterId,
@@ -131,7 +131,7 @@ export async function POST(request: Request) {
         });
       }
 
-      // Fetch the updated character with all relations
+      // Get final character state with updated relations
       return tx.character.findUnique({
         where: { id: characterId },
         include: {
@@ -145,7 +145,10 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Failed to purchase item:', error);
     return NextResponse.json(
-      { error: 'Failed to purchase item' },
+      {
+        error:
+          error instanceof Error ? error.message : 'Failed to purchase item',
+      },
       { status: 500 }
     );
   }

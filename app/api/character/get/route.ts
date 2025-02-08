@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { verifyAuth } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const user = await getAuthenticatedUser();
+    const user = await verifyAuth(request);
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized - Invalid or missing authentication' },
+        { status: 401 }
+      );
     }
 
     // Get all characters for the user

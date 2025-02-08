@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { CharacterClass, CardType, Rarity } from '@prisma/client';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { verifyAuth } from '@/lib/auth';
 
 const STARTER_DECKS = {
   [CharacterClass.WARRIOR]: [
@@ -105,13 +105,25 @@ const STARTER_DECKS = {
 
 export async function POST(request: Request) {
   try {
-    const user = await getAuthenticatedUser();
+    // Verify authentication
+    const user = await verifyAuth(request);
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized - Invalid or missing authentication' },
+        { status: 401 }
+      );
     }
 
     const character = await request.json();
     const { name, class: characterClass } = character;
+
+    // Validate input
+    if (!name || !characterClass) {
+      return NextResponse.json(
+        { error: 'Name and class are required' },
+        { status: 400 }
+      );
+    }
 
     // Create character with a transaction to ensure all related data is created
     const newCharacter = await prisma.$transaction(async (tx) => {

@@ -28,7 +28,7 @@ export function BattleScreen() {
     discardHand,
     endBattle,
     startBattle,
-    walletAddress,
+    isConnected,
     setCharacter,
   } = useGameStore();
 
@@ -58,19 +58,15 @@ export function BattleScreen() {
   }, []);
 
   const checkBlockedStatus = useCallback(async () => {
-    if (!walletAddress || !currentCharacter) return false;
-
     try {
       const response = await fetch('/api/character/get', {
-        headers: {
-          'x-wallet-address': walletAddress,
-        },
+        credentials: 'include',
       });
 
       if (response.ok) {
         const { characters } = await response.json();
         const character = characters.find(
-          (c: any) => c.id === currentCharacter.id
+          (c: any) => c.id === currentCharacter?.id
         );
         if (character?.user?.blockedFromBattles) {
           setIsBlocked(true);
@@ -87,10 +83,29 @@ export function BattleScreen() {
       console.error('Failed to check blocked status:', error);
       return false;
     }
-  }, [walletAddress, currentCharacter, router]);
+  }, [currentCharacter, router]);
+
+  const determineEnemyIntent = useCallback(() => {
+    if (!currentEnemy) return;
+
+    const totalWeight = currentEnemy.moves.reduce(
+      (sum, move) => sum + move.weight,
+      0
+    );
+    let random = Math.random() * totalWeight;
+
+    for (const move of currentEnemy.moves) {
+      random -= move.weight;
+      if (random <= 0) {
+        setEnemyIntent(move.description);
+        setCurrentMove(move);
+        return;
+      }
+    }
+  }, [currentEnemy]);
 
   const initializeBattle = useCallback(async () => {
-    if (!currentCharacter || !walletAddress || battleInitialized) return;
+    if (!currentCharacter || !isConnected || battleInitialized) return;
 
     try {
       setIsLoading(true);
@@ -101,9 +116,7 @@ export function BattleScreen() {
 
       // Fetch fresh character data
       const characterResponse = await fetch('/api/character/get', {
-        headers: {
-          'x-wallet-address': walletAddress,
-        },
+        credentials: 'include',
       });
 
       if (!characterResponse.ok) {
@@ -126,9 +139,7 @@ export function BattleScreen() {
       const enemyResponse = await fetch(
         `/api/enemy/get?level=${updatedCharacter.level}`,
         {
-          headers: {
-            'x-wallet-address': walletAddress,
-          },
+          credentials: 'include',
         }
       );
 
@@ -168,7 +179,7 @@ export function BattleScreen() {
     }
   }, [
     currentCharacter,
-    walletAddress,
+    isConnected,
     battleInitialized,
     checkBlockedStatus,
     setCharacter,
@@ -176,35 +187,17 @@ export function BattleScreen() {
     startBattle,
     drawCard,
     router,
+    determineEnemyIntent,
   ]);
 
   useEffect(() => {
-    if (!currentCharacter || !walletAddress) {
+    if (!currentCharacter || !isConnected) {
       router.push('/');
       return;
     }
 
     initializeBattle();
-  }, [currentCharacter, walletAddress, router, initializeBattle]);
-
-  const determineEnemyIntent = useCallback(() => {
-    if (!currentEnemy) return;
-
-    const totalWeight = currentEnemy.moves.reduce(
-      (sum, move) => sum + move.weight,
-      0
-    );
-    let random = Math.random() * totalWeight;
-
-    for (const move of currentEnemy.moves) {
-      random -= move.weight;
-      if (random <= 0) {
-        setEnemyIntent(move.description);
-        setCurrentMove(move);
-        return;
-      }
-    }
-  }, [currentEnemy]);
+  }, [currentCharacter, isConnected, router, initializeBattle]);
 
   const handlePlayCard = async (cardIndex: number) => {
     const card = playerHand[cardIndex];
@@ -309,9 +302,12 @@ export function BattleScreen() {
   };
 
   const handleVictory = async () => {
-    if (!currentCharacter || !currentEnemy || !walletAddress) return;
+    if (!currentCharacter || !currentEnemy || !isConnected) return;
 
     try {
+      setIsLoading(true); // Add loading state during reward processing
+
+      // Calculate rewards
       const goldReward =
         Math.floor(
           Math.random() *
@@ -322,51 +318,79 @@ export function BattleScreen() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-wallet-address': walletAddress,
         },
+        credentials: 'include',
         body: JSON.stringify({
           characterId: currentCharacter.id,
           experience: currentEnemy.experienceReward,
           gold: goldReward,
-          health: battleState.playerHealth,
+          health: battleState.playerHealth, // Important: Update final health
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to update character');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update rewards');
+      }
 
       const { character, leveledUp, healthIncrease, energyIncrease } =
         await response.json();
 
+      // Update character in store
       setCharacter(character);
-      toast.success('Victory!');
+
+      // Show success messages
+      toast.success('Victory!', { id: 'battle-victory' });
       toast.success(
-        `Earned ${goldReward} gold and ${currentEnemy.experienceReward} experience!`
+        `Earned ${goldReward} gold and ${currentEnemy.experienceReward} experience!`,
+        { id: 'battle-rewards' }
       );
 
       if (leveledUp) {
         toast.success(
           `Level Up! Gained ${healthIncrease} max HP and ${energyIncrease} energy!`,
-          { duration: 5000 }
+          { duration: 5000, id: 'level-up' }
         );
       }
 
+      // End battle and return to map
       endBattle();
       router.push('/map');
     } catch (error) {
       console.error('Failed to process victory:', error);
-      toast.error('Failed to update rewards');
+      toast.error('Failed to update rewards and stats. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDefeat = async () => {
-    if (!walletAddress) return;
+    if (!isConnected) return;
 
     try {
+      setIsLoading(true);
+
+      // Update character health and block status
+      const response = await fetch('/api/character/update', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          characterId: currentCharacter?.id,
+          health: 0, // Set health to 0 on defeat
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update character status');
+      }
+
+      // Block character from battles
       await fetch('/api/character/block', {
         method: 'POST',
-        headers: {
-          'x-wallet-address': walletAddress,
-        },
+        credentials: 'include',
       });
 
       toast.error(
@@ -377,6 +401,8 @@ export function BattleScreen() {
     } catch (error) {
       console.error('Failed to process defeat:', error);
       toast.error('Failed to update character status');
+    } finally {
+      setIsLoading(false);
     }
   };
 

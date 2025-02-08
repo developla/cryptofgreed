@@ -1,26 +1,21 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 import {
   CharacterClass,
   WalletType,
   CardType,
   Rarity,
   Effect,
-  EquipmentSlot,
 } from '@prisma/client';
-
-declare global {
-  interface Window {
-    ethereum?: any;
-    solana?: any;
-  }
-}
 
 interface GameState {
   // Auth State
   isConnected: boolean;
   walletAddress: string | null;
   walletType: WalletType | null;
+  emailAuth: {
+    email: string | null;
+  };
 
   // Game State
   currentCharacter: Character | null;
@@ -33,13 +28,16 @@ interface GameState {
   // Actions
   connectWallet: (address: string, type: WalletType) => void;
   disconnectWallet: () => void;
-  checkWalletConnection: () => Promise<boolean>;
+  checkAuth: () => Promise<boolean>;
   setCharacter: (character: Character | null) => void;
   startBattle: () => void;
   endBattle: () => void;
   drawCard: () => void;
   playCard: (cardIndex: number) => void;
   discardHand: () => void;
+  loginWithEmail: (email: string, password: string) => Promise<boolean>;
+  registerWithEmail: (email: string, password: string) => Promise<boolean>;
+  logoutEmail: () => void;
 }
 
 interface Character {
@@ -73,7 +71,7 @@ interface Equipment {
   id: string;
   name: string;
   description: string;
-  slot: EquipmentSlot;
+  slot: string;
   rarity: Rarity;
   effects: Effect[];
 }
@@ -82,6 +80,9 @@ const initialState = {
   isConnected: false,
   walletAddress: null,
   walletType: null,
+  emailAuth: {
+    email: null,
+  },
   currentCharacter: null,
   inBattle: false,
   playerHand: [],
@@ -95,7 +96,6 @@ export const useGameStore = create<GameState>()(
     (set, get) => ({
       ...initialState,
 
-      // Actions
       connectWallet: (address, type) =>
         set({
           isConnected: true,
@@ -105,34 +105,33 @@ export const useGameStore = create<GameState>()(
 
       disconnectWallet: () => set(initialState),
 
-      checkWalletConnection: async () => {
-        const { walletType, walletAddress } = get();
-        if (!walletType || !walletAddress) return false;
-
+      checkAuth: async () => {
         try {
-          let isStillConnected = false;
+          const response = await fetch('/api/character/get', {
+            credentials: 'include',
+          });
 
-          if (walletType === WalletType.ETHEREUM && window.ethereum) {
-            const accounts = await window.ethereum.request({
-              method: 'eth_accounts',
-            });
-            isStillConnected =
-              accounts?.[0]?.toLowerCase() === walletAddress.toLowerCase();
-          } else if (walletType === WalletType.SOLANA && window.solana) {
-            isStillConnected =
-              window.solana.isConnected &&
-              window.solana.publicKey?.toString() === walletAddress;
-          }
-
-          if (!isStillConnected) {
+          if (!response.ok) {
             set(initialState);
             return false;
           }
 
-          set({ isConnected: true });
+          const { characters } = await response.json();
+          if (characters.length > 0) {
+            const currentCharacter = get().currentCharacter;
+            if (currentCharacter) {
+              const updatedCharacter = characters.find(
+                (c: Character) => c.id === currentCharacter.id
+              );
+              if (updatedCharacter) {
+                set({ currentCharacter: updatedCharacter });
+              }
+            }
+          }
+
           return true;
         } catch (error) {
-          console.error('Failed to check wallet connection:', error);
+          console.error('Failed to check auth:', error);
           set(initialState);
           return false;
         }
@@ -148,7 +147,6 @@ export const useGameStore = create<GameState>()(
           return;
         }
 
-        // Store both the current deck and original deck
         const deck = character.deck || [];
         set({
           currentCharacter: character,
@@ -161,7 +159,6 @@ export const useGameStore = create<GameState>()(
         const { originalDeck } = get();
         if (!originalDeck.length) return;
 
-        // Create a fresh shuffled deck from the original deck
         const shuffledDeck = [...originalDeck].sort(() => Math.random() - 0.5);
 
         set({
@@ -185,9 +182,7 @@ export const useGameStore = create<GameState>()(
         const { playerDeck, playerHand, playerDiscardPile, originalDeck } =
           get();
 
-        // If deck is empty, check discard pile
         if (playerDeck.length === 0) {
-          // If discard pile is also empty, reset from original deck
           if (playerDiscardPile.length === 0) {
             if (originalDeck.length === 0) return;
 
@@ -201,7 +196,6 @@ export const useGameStore = create<GameState>()(
             return;
           }
 
-          // Shuffle discard pile into new deck
           const shuffledDeck = [...playerDiscardPile].sort(
             () => Math.random() - 0.5
           );
@@ -213,7 +207,6 @@ export const useGameStore = create<GameState>()(
           return;
         }
 
-        // Draw from current deck
         const newDeck = [...playerDeck];
         const drawnCard = newDeck.pop()!;
         set({
@@ -239,14 +232,55 @@ export const useGameStore = create<GameState>()(
           playerDiscardPile: [...playerDiscardPile, ...playerHand],
         });
       },
+
+      loginWithEmail: async (email, password) => {
+        try {
+          const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+
+          if (!response.ok) return false;
+
+          const { user } = await response.json();
+          set({
+            isConnected: true,
+            emailAuth: { email: user.email },
+          });
+          return true;
+        } catch (error) {
+          console.error('Email login error:', error);
+          return false;
+        }
+      },
+
+      registerWithEmail: async (email, password) => {
+        try {
+          const response = await fetch('/api/auth/signup', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+
+          return response.ok;
+        } catch (error) {
+          console.error('Email registration error:', error);
+          return false;
+        }
+      },
+
+      logoutEmail: () => {
+        set(initialState);
+      },
     }),
     {
       name: 'game-storage',
-      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        walletAddress: state.walletAddress,
-        walletType: state.walletType,
         isConnected: state.isConnected,
+        emailAuth: state.emailAuth,
       }),
     }
   )
