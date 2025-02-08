@@ -27,6 +27,7 @@ A Web3-powered roguelike deck-building game where players can create characters,
 - MongoDB (via Prisma ORM)
 - Next.js API Routes
 - Prisma Client
+- HTTP-only Cookie Authentication
 
 ### Smart Contracts
 
@@ -37,6 +38,15 @@ A Web3-powered roguelike deck-building game where players can create characters,
 
 ## Current Features
 
+### Authentication System
+
+- Email/Password Authentication
+- Secure HTTP-only Cookie Sessions
+- Password Hashing with bcrypt
+- JWT Token Management
+- Account Settings Management
+- Wallet Connection Integration
+
 ### Web3 Integration
 
 - Wallet Connection (MetaMask & Phantom)
@@ -44,6 +54,7 @@ A Web3-powered roguelike deck-building game where players can create characters,
 - NFT-based Bonus System
 - On-chain Event Tracking
 - Multi-chain Support
+- Wallet Management in Settings
 
 ### Character System
 
@@ -88,6 +99,41 @@ A Web3-powered roguelike deck-building game where players can create characters,
   - Treasure Rooms
   - Mystery Events
 - Dynamic Difficulty Scaling
+
+## Recent Updates
+
+### Authentication Improvements
+
+- Switched to HTTP-only cookie-based authentication
+- Enhanced security with JWT token management
+- Added account settings page
+- Improved error handling and user feedback
+- Streamlined login/registration flow
+
+### UI/UX Enhancements
+
+- Added navigation system
+- Improved header layout
+- Enhanced gear management interface
+- Added loading states and animations
+- Improved error messaging
+- Responsive design improvements
+
+### Battle System Updates
+
+- Enhanced reward calculations
+- Improved state management
+- Added battle status persistence
+- Enhanced victory/defeat handling
+- Added character blocking system
+
+### Security Updates
+
+- Implemented secure session management
+- Added request validation
+- Enhanced error handling
+- Improved API route protection
+- Added authentication middleware
 
 ## Work in Progress
 
@@ -151,6 +197,7 @@ DATABASE_URL="your_mongodb_url"
 NEXT_PUBLIC_RPC_URL="your_ethereum_rpc_url"
 NEXT_PUBLIC_NFT_CONTRACT_ADDRESS="your_nft_contract_address"
 NEXT_PUBLIC_NETWORK="network_name" # mainnet, goerli, etc.
+JWT_SECRET="your_jwt_secret"
 ```
 
 4. Run the development server
