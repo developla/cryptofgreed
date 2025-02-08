@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,13 @@ export default function SettingsPage() {
   const [newEmail, setNewEmail] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+
+  // Check authentication on mount
+  useEffect(() => {
+    if (!isConnected) {
+      router.push('/');
+    }
+  }, [isConnected, router]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -106,8 +113,8 @@ export default function SettingsPage() {
     }
   };
 
+  // Show loading state while checking auth
   if (!isConnected) {
-    router.push('/');
     return null;
   }
 

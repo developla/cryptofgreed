@@ -2,6 +2,7 @@ import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Providers } from '@/components/providers';
 import { GameHeader } from '@/components/layout/game-header';
+import { Navigation } from '@/components/layout/navigation';
 import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
@@ -27,8 +28,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
+            <Navigation />
             <GameHeader />
-            <div className="pt-16">{children}</div>
+            <div className="pt-28">{children}</div>
             <Toaster />
           </ThemeProvider>
         </Providers>

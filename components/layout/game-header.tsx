@@ -42,8 +42,7 @@ interface Equipment {
 const EXPERIENCE_PER_LEVEL = 100;
 
 export function GameHeader() {
-  const { currentCharacter, isConnected, checkAuth, setCharacter } =
-    useGameStore();
+  const { currentCharacter, isConnected, checkAuth, setCharacter } = useGameStore();
   const router = useRouter();
   const pathname = usePathname();
   const [showGearSheet, setShowGearSheet] = useState(false);
@@ -120,7 +119,7 @@ export function GameHeader() {
   }
 
   return (
-    <div className="fixed left-0 right-0 top-0 z-50 border-b bg-background/95">
+    <div className="fixed left-0 right-0 top-12 z-50 border-b bg-background/95">
       <div className="container mx-auto px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4 overflow-x-auto pb-2">
@@ -140,10 +139,7 @@ export function GameHeader() {
                         </p>
                       </div>
                       <div className="mt-1 w-full">
-                        <Progress
-                          value={calculateXpProgress()}
-                          className="h-1"
-                        />
+                        <Progress value={calculateXpProgress()} className="h-1" />
                         <p className="text-xs text-muted-foreground">
                           XP: {currentCharacter.experience} /{' '}
                           {currentCharacter.level * EXPERIENCE_PER_LEVEL}
@@ -287,12 +283,15 @@ export function GameHeader() {
           </div>
 
           <div className="flex items-center gap-2">
-            {isConnected && (
-              <Button variant="ghost" size="sm" asChild className="gap-2">
-                <Link href="/settings">
-                  <Settings className="h-4 w-4" />
-                  <span className="hidden sm:inline">Settings</span>
-                </Link>
+            {isConnected && pathname !== '/settings' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push('/settings')}
+                className="gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Settings</span>
               </Button>
             )}
             <AuthHeader />

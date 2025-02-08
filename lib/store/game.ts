@@ -8,7 +8,6 @@ interface GameState {
   walletAddress: string | null;
   walletType: WalletType | null;
   emailAuth: {
-    token: string | null;
     email: string | null;
   };
 
@@ -76,7 +75,6 @@ const initialState = {
   walletAddress: null,
   walletType: null,
   emailAuth: {
-    token: null,
     email: null,
   },
   currentCharacter: null,
@@ -112,7 +110,19 @@ export const useGameStore = create<GameState>()(
             return false;
           }
 
-          set({ isConnected: true });
+          const { characters } = await response.json();
+          if (characters.length > 0) {
+            const currentCharacter = get().currentCharacter;
+            if (currentCharacter) {
+              const updatedCharacter = characters.find(
+                (c: Character) => c.id === currentCharacter.id
+              );
+              if (updatedCharacter) {
+                set({ currentCharacter: updatedCharacter });
+              }
+            }
+          }
+
           return true;
         } catch (error) {
           console.error('Failed to check auth:', error);
@@ -226,7 +236,7 @@ export const useGameStore = create<GameState>()(
           const { user } = await response.json();
           set({
             isConnected: true,
-            emailAuth: { email: user.email, token: null },
+            emailAuth: { email: user.email },
           });
           return true;
         } catch (error) {
