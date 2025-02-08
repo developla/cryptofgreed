@@ -31,10 +31,15 @@ export async function POST(request: Request) {
     }
 
     // Create and set auth token
-    const token = await createAuthToken(user.id, user.email || ''); // Handle potential null email
+    const token = await createAuthToken(user.id, email);
     setAuthCookie(token);
 
-    return NextResponse.json({ user: { id: user.id, email: user.email } });
+    return NextResponse.json({
+      user: {
+        id: user.id,
+        email: user.email,
+      },
+    });
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(

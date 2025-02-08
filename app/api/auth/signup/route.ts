@@ -14,7 +14,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    // Check if email already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
     if (existingUser) {
       return NextResponse.json(
         { error: 'Email already registered' },
@@ -22,17 +26,30 @@ export async function POST(request: Request) {
       );
     }
 
+    // Create new user
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: { email, password: hashedPassword },
+      data: {
+        email,
+        password: hashedPassword,
+      },
     });
 
-    const token = await createAuthToken(user.id, user.email);
+    // Create and set auth token
+    const token = await createAuthToken(user.id, email);
     setAuthCookie(token);
 
-    return NextResponse.json({ user: { id: user.id, email: user.email } });
+    return NextResponse.json({
+      user: {
+        id: user.id,
+        email: user.email,
+      },
+    });
   } catch (error) {
-    console.error('Signup error:', error);
-    return NextResponse.json({ error: 'Registration failed' }, { status: 500 });
+    console.error('Registration error:', error);
+    return NextResponse.json(
+      { error: 'Failed to register user' },
+      { status: 500 }
+    );
   }
 }
