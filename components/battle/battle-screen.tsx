@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
@@ -46,6 +46,8 @@ export function BattleScreen() {
   const [enemyIntent, setEnemyIntent] = useState('');
   const [currentMove, setCurrentMove] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [battleInitialized, setBattleInitialized] = useState(false);
 
   useEffect(() => {
     // Show warning about page refresh
@@ -55,57 +57,137 @@ export function BattleScreen() {
     });
   }, []);
 
+  const checkBlockedStatus = useCallback(async () => {
+    if (!walletAddress || !currentCharacter) return false;
+
+    try {
+      const response = await fetch('/api/character/get', {
+        headers: {
+          'x-wallet-address': walletAddress,
+        },
+      });
+
+      if (response.ok) {
+        const { characters } = await response.json();
+        const character = characters.find(
+          (c: any) => c.id === currentCharacter.id
+        );
+        if (character?.user?.blockedFromBattles) {
+          setIsBlocked(true);
+          toast.error(
+            'Your account is blocked from battles. Please contact support for assistance.',
+            { duration: 10000 }
+          );
+          router.push('/map');
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to check blocked status:', error);
+      return false;
+    }
+  }, [walletAddress, currentCharacter, router]);
+
+  const initializeBattle = useCallback(async () => {
+    if (!currentCharacter || !walletAddress || battleInitialized) return;
+
+    try {
+      setIsLoading(true);
+
+      // Check if user is blocked
+      const blocked = await checkBlockedStatus();
+      if (blocked) return;
+
+      // Fetch fresh character data
+      const characterResponse = await fetch('/api/character/get', {
+        headers: {
+          'x-wallet-address': walletAddress,
+        },
+      });
+
+      if (!characterResponse.ok) {
+        throw new Error('Failed to fetch character data');
+      }
+
+      const { characters } = await characterResponse.json();
+      const updatedCharacter = characters.find(
+        (c: any) => c.id === currentCharacter.id
+      );
+
+      if (!updatedCharacter) {
+        throw new Error('Character not found');
+      }
+
+      // Update character in store with fresh data
+      setCharacter(updatedCharacter);
+
+      // Fetch enemy data
+      const enemyResponse = await fetch(
+        `/api/enemy/get?level=${updatedCharacter.level}`,
+        {
+          headers: {
+            'x-wallet-address': walletAddress,
+          },
+        }
+      );
+
+      if (!enemyResponse.ok) {
+        throw new Error('Failed to fetch enemy');
+      }
+
+      const { enemy } = await enemyResponse.json();
+      setCurrentEnemy(enemy);
+      setBattleState({
+        playerHealth: updatedCharacter.health,
+        playerBlock: 0,
+        playerEnergy: updatedCharacter.maxEnergy,
+        playerEffects: [],
+        enemyHealth: enemy.health,
+        enemyBlock: 0,
+        enemyEffects: [],
+      });
+
+      // End any existing battle and start a new one
+      endBattle();
+      startBattle();
+
+      // Draw initial hand
+      for (let i = 0; i < 5; i++) {
+        drawCard();
+      }
+
+      determineEnemyIntent();
+      setBattleInitialized(true);
+    } catch (error) {
+      console.error('Failed to initialize battle:', error);
+      toast.error('Failed to start battle');
+      router.push('/map');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [
+    currentCharacter,
+    walletAddress,
+    battleInitialized,
+    checkBlockedStatus,
+    setCharacter,
+    endBattle,
+    startBattle,
+    drawCard,
+    router,
+  ]);
+
   useEffect(() => {
     if (!currentCharacter || !walletAddress) {
       router.push('/');
       return;
     }
 
-    const initializeBattle = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch(
-          `/api/enemy/get?level=${currentCharacter.level}`,
-          {
-            headers: {
-              'x-wallet-address': walletAddress,
-            },
-          }
-        );
-
-        if (!response.ok) throw new Error('Failed to fetch enemy');
-
-        const { enemy } = await response.json();
-        setCurrentEnemy(enemy);
-        setBattleState({
-          playerHealth: currentCharacter.health,
-          playerBlock: 0,
-          playerEnergy: currentCharacter.maxEnergy,
-          playerEffects: [],
-          enemyHealth: enemy.health,
-          enemyBlock: 0,
-          enemyEffects: [],
-        });
-
-        startBattle();
-        for (let i = 0; i < 5; i++) {
-          drawCard();
-        }
-
-        determineEnemyIntent();
-      } catch (error) {
-        console.error('Failed to initialize battle:', error);
-        toast.error('Failed to start battle');
-        router.push('/map');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     initializeBattle();
-  }, [currentCharacter, router, drawCard, startBattle, walletAddress]);
+  }, [currentCharacter, walletAddress, router, initializeBattle]);
 
-  const determineEnemyIntent = () => {
+  const determineEnemyIntent = useCallback(() => {
     if (!currentEnemy) return;
 
     const totalWeight = currentEnemy.moves.reduce(
@@ -122,7 +204,7 @@ export function BattleScreen() {
         return;
       }
     }
-  };
+  }, [currentEnemy]);
 
   const handlePlayCard = async (cardIndex: number) => {
     const card = playerHand[cardIndex];
@@ -171,7 +253,7 @@ export function BattleScreen() {
     }
   };
 
-  const handleEnemyTurn = () => {
+  const handleEnemyTurn = useCallback(() => {
     if (!currentEnemy || !currentMove) return;
 
     let newState = { ...battleState };
@@ -207,7 +289,7 @@ export function BattleScreen() {
     if (newState.playerHealth <= 0) {
       handleDefeat();
     }
-  };
+  }, [currentEnemy, currentMove, battleState]);
 
   const handleEndTurn = () => {
     handleEnemyTurn();
@@ -255,9 +337,7 @@ export function BattleScreen() {
       const { character, leveledUp, healthIncrease, energyIncrease } =
         await response.json();
 
-      // Update character in store
       setCharacter(character);
-
       toast.success('Victory!');
       toast.success(
         `Earned ${goldReward} gold and ${currentEnemy.experienceReward} experience!`
@@ -307,6 +387,46 @@ export function BattleScreen() {
           <div className="animate-pulse space-y-4">
             <div className="h-4 w-3/4 rounded bg-primary/20"></div>
             <div className="h-8 rounded bg-primary/10"></div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isBlocked) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background/90 to-background p-4">
+        <Card className="max-w-md p-6 text-center">
+          <h2 className="mb-4 text-2xl font-bold text-destructive">
+            Account Blocked
+          </h2>
+          <p className="mb-4 text-muted-foreground">
+            Your account has been blocked from participating in battles. This
+            may be due to:
+          </p>
+          <ul className="mb-6 list-inside list-disc text-left text-muted-foreground">
+            <li>Previous battle violations</li>
+            <li>Suspicious activity</li>
+            <li>Multiple losses in succession</li>
+          </ul>
+          <p className="mb-6 text-sm text-muted-foreground">
+            To regain access, please contact support or consider upgrading to a
+            premium account for automatic reinstatement.
+          </p>
+          <div className="space-y-2">
+            <Button
+              className="w-full"
+              onClick={() => window.open('mailto:support@example.com')}
+            >
+              Contact Support
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => router.push('/map')}
+            >
+              Return to Map
+            </Button>
           </div>
         </Card>
       </div>

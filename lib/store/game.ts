@@ -27,6 +27,7 @@ interface GameState {
   playerHand: Card[];
   playerDeck: Card[];
   playerDiscardPile: Card[];
+  originalDeck: Card[]; // New state to store the original deck
 
   // Actions
   connectWallet: (address: string, type: WalletType) => void;
@@ -75,6 +76,7 @@ const initialState = {
   playerHand: [],
   playerDeck: [],
   playerDiscardPile: [],
+  originalDeck: [],
 };
 
 export const useGameStore = create<GameState>()(
@@ -125,19 +127,31 @@ export const useGameStore = create<GameState>()(
         }
       },
 
-      setCharacter: (character) =>
+      setCharacter: (character) => {
+        if (!character) {
+          set({
+            currentCharacter: null,
+            playerDeck: [],
+            originalDeck: [],
+          });
+          return;
+        }
+
+        // Store both the current deck and original deck
+        const deck = character.deck || [];
         set({
           currentCharacter: character,
-          playerDeck: character?.deck ? [...character.deck] : [],
-        }),
+          playerDeck: [...deck],
+          originalDeck: [...deck],
+        });
+      },
 
       startBattle: () => {
-        const { currentCharacter } = get();
-        if (!currentCharacter?.deck) return;
+        const { originalDeck } = get();
+        if (!originalDeck.length) return;
 
-        const shuffledDeck = [...currentCharacter.deck].sort(
-          () => Math.random() - 0.5
-        );
+        // Create a fresh shuffled deck from the original deck
+        const shuffledDeck = [...originalDeck].sort(() => Math.random() - 0.5);
 
         set({
           inBattle: true,
@@ -147,34 +161,50 @@ export const useGameStore = create<GameState>()(
         });
       },
 
-      endBattle: () =>
+      endBattle: () => {
         set({
           inBattle: false,
           playerHand: [],
           playerDeck: [],
           playerDiscardPile: [],
-        }),
+        });
+      },
 
       drawCard: () => {
-        const { playerDeck, playerHand, playerDiscardPile } = get();
+        const { playerDeck, playerHand, playerDiscardPile, originalDeck } =
+          get();
 
+        // If deck is empty, check discard pile
         if (playerDeck.length === 0) {
-          if (playerDiscardPile.length === 0) return;
+          // If discard pile is also empty, reset from original deck
+          if (playerDiscardPile.length === 0) {
+            if (originalDeck.length === 0) return;
 
+            const shuffledDeck = [...originalDeck].sort(
+              () => Math.random() - 0.5
+            );
+            set({
+              playerDeck: shuffledDeck.slice(1),
+              playerHand: [...playerHand, shuffledDeck[0]],
+            });
+            return;
+          }
+
+          // Shuffle discard pile into new deck
           const shuffledDeck = [...playerDiscardPile].sort(
             () => Math.random() - 0.5
           );
-
           set({
-            playerDeck: shuffledDeck,
+            playerDeck: shuffledDeck.slice(1),
+            playerHand: [...playerHand, shuffledDeck[0]],
             playerDiscardPile: [],
           });
           return;
         }
 
+        // Draw from current deck
         const newDeck = [...playerDeck];
         const drawnCard = newDeck.pop()!;
-
         set({
           playerDeck: newDeck,
           playerHand: [...playerHand, drawnCard],
