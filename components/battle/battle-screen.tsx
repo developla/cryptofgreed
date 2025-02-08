@@ -55,7 +55,6 @@ export function BattleScreen() {
     const initializeBattle = async () => {
       try {
         setIsLoading(true);
-        // Fetch a scaled enemy based on character level
         const response = await fetch(
           `/api/enemy/get?level=${currentCharacter.level}`,
           {
@@ -79,7 +78,6 @@ export function BattleScreen() {
           enemyEffects: [],
         });
 
-        // Start battle and draw initial hand
         startBattle();
         for (let i = 0; i < 5; i++) {
           drawCard();
@@ -128,7 +126,6 @@ export function BattleScreen() {
 
     let newState = { ...battleState };
 
-    // Calculate and apply damage
     if (card.damage) {
       const { damage, remainingBlock } = calculateDamage(
         card.damage,
@@ -145,7 +142,6 @@ export function BattleScreen() {
       };
     }
 
-    // Apply block
     if (card.block) {
       newState = {
         ...newState,
@@ -154,16 +150,13 @@ export function BattleScreen() {
       };
     }
 
-    // Apply card effects
     if (card.effects) {
       newState = applyCardEffects(card.effects, newState, true);
     }
 
-    // Update state
     setBattleState(newState);
     playCard(cardIndex);
 
-    // Check for victory after state update
     if (newState.enemyHealth <= 0) {
       await handleVictory();
     }
@@ -174,7 +167,6 @@ export function BattleScreen() {
 
     let newState = { ...battleState };
 
-    // Apply enemy damage
     if (currentMove.damage) {
       const { damage, remainingBlock } = calculateDamage(
         currentMove.damage,
@@ -190,7 +182,6 @@ export function BattleScreen() {
       };
     }
 
-    // Apply enemy block
     if (currentMove.block) {
       newState = {
         ...newState,
@@ -198,24 +189,19 @@ export function BattleScreen() {
       };
     }
 
-    // Apply enemy effects
     if (currentMove.effects) {
       newState = applyCardEffects(currentMove.effects, newState, false);
     }
 
     setBattleState(newState);
 
-    // Check for defeat after state update
     if (newState.playerHealth <= 0) {
       handleDefeat();
     }
   };
 
   const handleEndTurn = () => {
-    // Enemy's turn
     handleEnemyTurn();
-
-    // Reset for next turn
     discardHand();
     for (let i = 0; i < 5; i++) {
       drawCard();
@@ -224,8 +210,8 @@ export function BattleScreen() {
     setBattleState((prev) => ({
       ...prev,
       playerEnergy: currentCharacter?.maxEnergy || 0,
-      playerBlock: 0, // Block resets each turn
-      enemyBlock: 0, // Enemy block also resets each turn
+      playerBlock: 0,
+      enemyBlock: 0,
     }));
 
     determineEnemyIntent();
@@ -308,9 +294,18 @@ export function BattleScreen() {
     return null;
   }
 
+  const playerHealthPercent = Math.max(
+    0,
+    Math.min(100, (battleState.playerHealth / currentCharacter.maxHealth) * 100)
+  );
+
+  const enemyHealthPercent = Math.max(
+    0,
+    Math.min(100, (battleState.enemyHealth / currentEnemy.maxHealth) * 100)
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background/90 to-background p-4">
-      {/* Enemy Section */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-xl font-bold">{currentEnemy.name}</h2>
@@ -319,10 +314,7 @@ export function BattleScreen() {
             <span>{battleState.enemyBlock}</span>
           </div>
         </div>
-        <Progress
-          value={(battleState.enemyHealth / currentEnemy.maxHealth) * 100}
-          className="mb-2"
-        />
+        <Progress value={enemyHealthPercent} className="mb-2" />
         <div className="text-sm text-muted-foreground">
           Intent: {enemyIntent}
         </div>
@@ -331,17 +323,11 @@ export function BattleScreen() {
         </div>
       </div>
 
-      {/* Player Section */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-xl font-bold">{currentCharacter.name}</h2>
-            <Progress
-              value={
-                (battleState.playerHealth / currentCharacter.maxHealth) * 100
-              }
-              className="w-48"
-            />
+            <Progress value={playerHealthPercent} className="w-48" />
             <div className="text-sm text-muted-foreground">
               Health: {battleState.playerHealth}/{currentCharacter.maxHealth}
             </div>
@@ -360,7 +346,6 @@ export function BattleScreen() {
           </div>
         </div>
 
-        {/* Hand */}
         <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
           {playerHand.map((card, index) => (
             <Card
@@ -380,7 +365,6 @@ export function BattleScreen() {
           ))}
         </div>
 
-        {/* Deck Info */}
         <div className="flex justify-between items-center">
           <div className="flex gap-4 text-sm text-muted-foreground">
             <span>Draw Pile: {playerDeck.length}</span>
