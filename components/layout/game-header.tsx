@@ -16,6 +16,7 @@ import {
   Settings2,
   RefreshCw,
   Settings,
+  Menu,
 } from 'lucide-react';
 import {
   Sheet,
@@ -25,9 +26,14 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
-import Link from 'next/link';
 
 interface Equipment {
   id: string;
@@ -42,8 +48,7 @@ interface Equipment {
 const EXPERIENCE_PER_LEVEL = 100;
 
 export function GameHeader() {
-  const { currentCharacter, isConnected, checkAuth, setCharacter } =
-    useGameStore();
+  const { currentCharacter, isConnected, checkAuth, setCharacter } = useGameStore();
   const router = useRouter();
   const pathname = usePathname();
   const [showGearSheet, setShowGearSheet] = useState(false);
@@ -96,7 +101,6 @@ export function GameHeader() {
     }
   };
 
-  // Calculate XP progress
   const calculateXpProgress = () => {
     if (!currentCharacter) return 0;
     const currentLevelXp = (currentCharacter.level - 1) * EXPERIENCE_PER_LEVEL;
@@ -106,7 +110,6 @@ export function GameHeader() {
     return Math.min(100, Math.max(0, progress));
   };
 
-  // Only show minimal header on home page
   if (pathname === '/') {
     return (
       <div className="fixed left-0 right-0 top-0 z-50 border-b bg-background/95">
@@ -120,10 +123,56 @@ export function GameHeader() {
   }
 
   return (
-    <div className="fixed left-0 right-0 top-12 z-50 border-b bg-background/95">
+    <div className="fixed left-0 right-0 top-0 z-50 border-b bg-background/95">
       <div className="container mx-auto px-4 py-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4 overflow-x-auto pb-2">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* Mobile Menu */}
+          <div className="flex items-center justify-between sm:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                {isConnected && pathname !== '/settings' && (
+                  <DropdownMenuItem onClick={() => router.push('/settings')}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem asChild>
+                  <div className="w-full">
+                    <AuthHeader />
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {currentCharacter && (
+              <div className="flex items-center gap-2">
+                <Card className="p-2">
+                  <div className="flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-red-500" />
+                    <span className="text-sm">
+                      {currentCharacter.health}/{currentCharacter.maxHealth}
+                    </span>
+                  </div>
+                </Card>
+                <Card className="p-2">
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-yellow-500" />
+                    <span className="text-sm">
+                      {currentCharacter.energy}/{currentCharacter.maxEnergy}
+                    </span>
+                  </div>
+                </Card>
+              </div>
+            )}
+          </div>
+
+          {/* Character Stats */}
+          <div className="no-scrollbar flex items-center gap-4 overflow-x-auto pb-2">
             {currentCharacter && (
               <>
                 <Card className="shrink-0 p-2">
@@ -153,39 +202,41 @@ export function GameHeader() {
                   </div>
                 </Card>
 
-                <Card className="shrink-0 p-2">
-                  <div className="flex items-center gap-2">
-                    <Heart className="h-4 w-4 text-red-500" />
-                    <div>
-                      <div className="w-32">
-                        <Progress
-                          value={
-                            (currentCharacter.health /
-                              currentCharacter.maxHealth) *
-                            100
-                          }
-                          className="h-2"
-                        />
+                {/* Hide these cards on mobile, shown in the top bar instead */}
+                <div className="hidden sm:flex sm:items-center sm:gap-4">
+                  <Card className="shrink-0 p-2">
+                    <div className="flex items-center gap-2">
+                      <Heart className="h-4 w-4 text-red-500" />
+                      <div>
+                        <div className="w-32">
+                          <Progress
+                            value={
+                              (currentCharacter.health /
+                                currentCharacter.maxHealth) *
+                              100
+                            }
+                            className="h-2"
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {currentCharacter.health}/{currentCharacter.maxHealth} HP
+                        </p>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {currentCharacter.health}/{currentCharacter.maxHealth}{' '}
-                        HP
-                      </p>
                     </div>
-                  </div>
-                </Card>
+                  </Card>
 
-                <Card className="shrink-0 p-2">
-                  <div className="flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-yellow-500" />
-                    <div>
-                      <p className="text-sm font-medium">
-                        {currentCharacter.energy}/{currentCharacter.maxEnergy}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Energy</p>
+                  <Card className="shrink-0 p-2">
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-yellow-500" />
+                      <div>
+                        <p className="text-sm font-medium">
+                          {currentCharacter.energy}/{currentCharacter.maxEnergy}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Energy</p>
+                      </div>
                     </div>
-                  </div>
-                </Card>
+                  </Card>
+                </div>
 
                 <Card className="shrink-0 p-2">
                   <div className="flex items-center gap-2">
@@ -286,7 +337,8 @@ export function GameHeader() {
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Desktop Navigation */}
+          <div className="hidden items-center gap-2 sm:flex">
             {isConnected && pathname !== '/settings' && (
               <Button
                 variant="ghost"

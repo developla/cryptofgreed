@@ -1,3 +1,4 @@
+// Add Consumable model and update Battle model
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,8 +12,8 @@ model User {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
   walletAddress String?   @unique 
   walletType    WalletType?
-  email         String?   @unique // Add email field
-  password      String?   // Add hashed password field
+  email         String?   @unique
+  password      String?
   characters    Character[]
   blockedFromBattles Boolean @default(false)
   createdAt     DateTime  @default(now())
@@ -34,10 +35,10 @@ model Character {
   gold          Int       @default(0)
   deck          Card[]
   equipment     Equipment[]
+  consumables   Consumable[] // Add consumables relation
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-
-  Battle Battle[]
+  Battle        Battle[]
 }
 
 model Card {
@@ -67,6 +68,30 @@ model Equipment {
   effects       Effect[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+// New Consumable model
+model Consumable {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  characterId   String    @db.ObjectId
+  character     Character @relation(fields: [characterId], references: [id])
+  name          String
+  description   String
+  type          ConsumableType
+  value         Int
+  duration      Int?
+  quantity      Int       @default(1)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum ConsumableType {
+  HEALTH_POTION
+  ENERGY_POTION
+  STRENGTH_POTION
+  DEXTERITY_POTION
+  BLOCK_POTION
+  DRAW_POTION
 }
 
 enum WalletType {
@@ -142,8 +167,36 @@ model Battle {
   playerHand    Json
   playerDiscardPile Json
   active        Boolean   @default(true)
+  rewards       BattleRewards? // Add rewards field
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   @@unique([characterId, active])
+}
+
+type BattleRewards {
+  gold          Int
+  experience    Int
+  cards         CardReward[]
+  consumables   ConsumableReward[]
+}
+
+type CardReward {
+  name          String
+  description   String
+  type          CardType
+  rarity        Rarity
+  energy        Int
+  damage        Int?
+  block         Int?
+  effects       Effect[]
+}
+
+type ConsumableReward {
+  name          String
+  description   String
+  type          ConsumableType
+  value         Int
+  duration      Int?
+  quantity      Int
 }

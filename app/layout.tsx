@@ -30,7 +30,7 @@ export default function RootLayout({
           >
             <Navigation />
             <GameHeader />
-            <div className="pt-28">{children}</div>
+            <div className="pt-20">{children}</div>
             <Toaster />
           </ThemeProvider>
         </Providers>
