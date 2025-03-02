@@ -19,7 +19,7 @@ export function Navigation() {
   };
 
   return (
-    <div className="fixed left-0 right-0 top-0 z-40 flex items-center gap-2 bg-background/95 px-4 py-2">
+    <div className="fixed left-0 right-0 top-0 z-[100] flex items-center gap-2 bg-white/10 px-4 py-2 backdrop-blur-md">
       <Button variant="ghost" size="sm" onClick={handleBack} className="gap-2">
         <ArrowLeft className="h-4 w-4" />
         Back to Game
