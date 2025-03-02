@@ -11,12 +11,12 @@ import {
   Coins,
   Heart,
   Zap,
-  Trophy,
   ShieldCheck,
   Settings2,
   RefreshCw,
   Settings,
   Menu,
+  Star,
 } from 'lucide-react';
 import {
   Sheet,
@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
+import { Badge } from '../ui/badge';
 
 interface Equipment {
   id: string;
@@ -48,7 +49,8 @@ interface Equipment {
 const EXPERIENCE_PER_LEVEL = 100;
 
 export function GameHeader() {
-  const { currentCharacter, isConnected, checkAuth, setCharacter } = useGameStore();
+  const { currentCharacter, isConnected, checkAuth, setCharacter } =
+    useGameStore();
   const router = useRouter();
   const pathname = usePathname();
   const [showGearSheet, setShowGearSheet] = useState(false);
@@ -112,7 +114,7 @@ export function GameHeader() {
 
   if (pathname === '/') {
     return (
-      <div className="fixed left-0 right-0 top-0 z-50 border-b bg-background/95">
+      <div className="fixed left-0 right-0 top-0 z-50 border-b bg-background/95 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-2">
           <div className="flex justify-end">
             <AuthHeader />
@@ -123,8 +125,8 @@ export function GameHeader() {
   }
 
   return (
-    <div className="fixed left-0 right-0 top-0 z-50 border-b bg-background/95">
-      <div className="container mx-auto px-4 py-2">
+    <div className="fixed left-0 right-0 top-0 z-50 border-b border-amber-900/30 bg-gradient-to-b from-background to-background/90 backdrop-blur-sm">
+      <div className="container mx-auto px-4 py-3">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Mobile Menu */}
           <div className="flex items-center justify-between sm:hidden">
@@ -151,18 +153,18 @@ export function GameHeader() {
 
             {currentCharacter && (
               <div className="flex items-center gap-2">
-                <Card className="p-2">
+                <Card className="border-red-500/30 bg-background/60 p-2 shadow-sm">
                   <div className="flex items-center gap-2">
                     <Heart className="h-4 w-4 text-red-500" />
-                    <span className="text-sm">
+                    <span className="text-sm font-medium">
                       {currentCharacter.health}/{currentCharacter.maxHealth}
                     </span>
                   </div>
                 </Card>
-                <Card className="p-2">
+                <Card className="border-yellow-500/30 bg-background/60 p-2 shadow-sm">
                   <div className="flex items-center gap-2">
                     <Zap className="h-4 w-4 text-yellow-500" />
-                    <span className="text-sm">
+                    <span className="text-sm font-medium">
                       {currentCharacter.energy}/{currentCharacter.maxEnergy}
                     </span>
                   </div>
@@ -175,25 +177,31 @@ export function GameHeader() {
           <div className="no-scrollbar flex items-center gap-4 overflow-x-auto pb-2">
             {currentCharacter && (
               <>
-                <Card className="shrink-0 p-2">
-                  <div className="flex items-center gap-2">
-                    <Sword className="h-4 w-4" />
+                <Card className="relative shrink-0 overflow-hidden border-primary/20 bg-gradient-to-br from-background to-primary/5 p-2.5 shadow-md">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 p-2">
+                      <Sword className="h-5 w-5 text-primary" />
+                    </div>
                     <div>
-                      <p className="text-sm font-medium">
+                      <p className="text-sm font-bold tracking-wide">
                         {currentCharacter.name}
                       </p>
                       <div className="flex items-center gap-1">
-                        <Trophy className="h-3 w-3 text-yellow-500" />
-                        <p className="text-xs text-muted-foreground">
-                          Level {currentCharacter.level}
-                        </p>
+                        <div className="flex items-center">
+                          <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
+                          <Badge variant="outline" className="ml-1 px-1.5 py-0">
+                            <span className="text-xs font-semibold">
+                              Level {currentCharacter.level}
+                            </span>
+                          </Badge>
+                        </div>
                       </div>
-                      <div className="mt-1 w-full">
+                      <div className="mt-1.5 w-full">
                         <Progress
                           value={calculateXpProgress()}
-                          className="h-1"
+                          className="h-1.5 bg-primary/20"
                         />
-                        <p className="text-xs text-muted-foreground">
+                        <p className="mt-0.5 text-xs text-muted-foreground">
                           XP: {currentCharacter.experience} /{' '}
                           {currentCharacter.level * EXPERIENCE_PER_LEVEL}
                         </p>
@@ -204,9 +212,9 @@ export function GameHeader() {
 
                 {/* Hide these cards on mobile, shown in the top bar instead */}
                 <div className="hidden sm:flex sm:items-center sm:gap-4">
-                  <Card className="shrink-0 p-2">
+                  <Card className="shrink-0 overflow-hidden border-red-500/20 bg-gradient-to-br from-background to-red-950/5 p-2.5 shadow-md">
                     <div className="flex items-center gap-2">
-                      <Heart className="h-4 w-4 text-red-500" />
+                      <Heart className="h-5 w-5 text-red-500" />
                       <div>
                         <div className="w-32">
                           <Progress
@@ -215,19 +223,20 @@ export function GameHeader() {
                                 currentCharacter.maxHealth) *
                               100
                             }
-                            className="h-2"
+                            className="h-2 bg-red-950/20"
                           />
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          {currentCharacter.health}/{currentCharacter.maxHealth} HP
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {currentCharacter.health}/{currentCharacter.maxHealth}{' '}
+                          HP
                         </p>
                       </div>
                     </div>
                   </Card>
 
-                  <Card className="shrink-0 p-2">
+                  <Card className="shrink-0 overflow-hidden border-yellow-500/20 bg-gradient-to-br from-background to-yellow-950/5 p-2.5 shadow-md">
                     <div className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-yellow-500" />
+                      <Zap className="h-5 w-5 text-yellow-500" />
                       <div>
                         <p className="text-sm font-medium">
                           {currentCharacter.energy}/{currentCharacter.maxEnergy}
@@ -238,9 +247,9 @@ export function GameHeader() {
                   </Card>
                 </div>
 
-                <Card className="shrink-0 p-2">
+                <Card className="shrink-0 overflow-hidden border-amber-500/20 bg-gradient-to-br from-background to-amber-950/5 p-2.5 shadow-md">
                   <div className="flex items-center gap-2">
-                    <Coins className="h-4 w-4 text-yellow-500" />
+                    <Coins className="h-5 w-5 text-amber-500" />
                     <div>
                       <p className="text-sm font-medium">
                         {currentCharacter.gold}
@@ -253,11 +262,11 @@ export function GameHeader() {
                 <Sheet open={showGearSheet} onOpenChange={setShowGearSheet}>
                   <SheetTrigger asChild>
                     <Card
-                      className="shrink-0 cursor-pointer p-2 transition-colors hover:bg-accent"
+                      className="shrink-0 cursor-pointer overflow-hidden border-blue-500/20 bg-gradient-to-br from-background to-blue-950/5 p-2.5 shadow-md transition-all hover:border-blue-500/40 hover:bg-blue-950/10 hover:shadow-lg"
                       onClick={() => setShowGearSheet(true)}
                     >
                       <div className="flex items-center gap-2">
-                        <Settings2 className="h-4 w-4" />
+                        <Settings2 className="h-5 w-5 text-blue-400" />
                         <div>
                           <p className="text-sm font-medium">Gear</p>
                           <p className="text-xs text-muted-foreground">
@@ -267,21 +276,21 @@ export function GameHeader() {
                       </div>
                     </Card>
                   </SheetTrigger>
-                  <SheetContent>
+                  <SheetContent className="border-l-primary/20 bg-gradient-to-br from-background to-primary/5">
                     <SheetHeader>
                       <div className="flex items-center justify-between">
-                        <SheetTitle>Equipment</SheetTitle>
+                        <SheetTitle className="text-xl font-bold">
+                          Equipment
+                        </SheetTitle>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={handleRefreshGear}
                           disabled={isRefreshing}
-                          className="gap-2"
+                          className="gap-2 border-primary/20 hover:border-primary/40 hover:bg-primary/10"
                         >
                           <RefreshCw
-                            className={`h-4 w-4 ${
-                              isRefreshing ? 'animate-spin' : ''
-                            }`}
+                            className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
                           />
                           Refresh
                         </Button>
@@ -297,21 +306,21 @@ export function GameHeader() {
                           {currentCharacter.equipment.map((item: Equipment) => (
                             <Card
                               key={item.id}
-                              className="flex items-start gap-3 p-3"
+                              className="flex items-start gap-3 border-primary/20 bg-gradient-to-br from-background to-primary/5 p-3 shadow-md"
                             >
-                              <ShieldCheck className="mt-1 h-5 w-5 shrink-0" />
+                              <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-blue-400" />
                               <div>
                                 <p className="font-medium">{item.name}</p>
                                 <p className="text-sm text-muted-foreground">
                                   {item.description}
                                 </p>
-                                <div className="mt-1 flex flex-wrap gap-2">
+                                <div className="mt-2 flex flex-wrap gap-2">
                                   {item.effects.map((effect, index) => (
                                     <span
                                       key={index}
-                                      className="rounded-full bg-primary/10 px-2 py-1 text-xs"
+                                      className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium"
                                     >
-                                      {effect.type}: {effect.value}
+                                      {effect.type}: +{effect.value}
                                     </span>
                                   ))}
                                 </div>
@@ -320,11 +329,11 @@ export function GameHeader() {
                           ))}
                         </div>
                       ) : (
-                        <div className="flex h-[300px] items-center justify-center text-center text-muted-foreground">
+                        <div className="flex h-[300px] items-center justify-center rounded-lg border border-dashed border-primary/20 bg-primary/5 text-center text-muted-foreground">
                           <div>
-                            <ShieldCheck className="mx-auto mb-2 h-8 w-8 opacity-50" />
-                            <p>No equipment found</p>
-                            <p className="text-sm">
+                            <ShieldCheck className="mx-auto mb-3 h-10 w-10 opacity-40" />
+                            <p className="font-medium">No equipment found</p>
+                            <p className="mt-1 text-sm">
                               Visit shops or defeat enemies to obtain gear
                             </p>
                           </div>
@@ -344,7 +353,7 @@ export function GameHeader() {
                 variant="ghost"
                 size="sm"
                 onClick={() => router.push('/settings')}
-                className="gap-2"
+                className="gap-2 hover:bg-primary/10"
               >
                 <Settings className="h-4 w-4" />
                 <span className="hidden sm:inline">Settings</span>
