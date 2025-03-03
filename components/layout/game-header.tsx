@@ -130,7 +130,8 @@ export function GameHeader() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Mobile Menu */}
           <div className="flex items-center justify-between sm:hidden">
-            <DropdownMenu>
+            <AuthHeader />
+            {/* <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
                   <Menu className="h-5 w-5" />
@@ -149,7 +150,7 @@ export function GameHeader() {
                   </div>
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu> */}
 
             {currentCharacter && (
               <div className="flex items-center gap-2">
@@ -348,17 +349,6 @@ export function GameHeader() {
 
           {/* Desktop Navigation */}
           <div className="hidden items-center gap-2 sm:flex">
-            {isConnected && pathname !== '/settings' && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push('/settings')}
-                className="gap-2 hover:bg-primary/10"
-              >
-                <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">Settings</span>
-              </Button>
-            )}
             <AuthHeader />
           </div>
         </div>
