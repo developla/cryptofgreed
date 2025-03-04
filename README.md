@@ -1,221 +1,165 @@
-# Project Gamify
+# Crypt of Greed - Card-Based Roguelike Game
 
-A Web3-powered roguelike deck-building game where players can create characters, battle enemies, and earn rewards in a fantasy world. The game features NFT integration for enhanced gameplay and exclusive rewards.
+A dark fantasy card-based roguelike game where players battle through dungeons, collect treasure, and face increasingly difficult enemies.
 
-## Tech Stack
+## Project Overview
 
-### Frontend
-- Next.js 13.5 (App Router)
-- React 18
+Crypt of Greed is a single-player card game that combines elements of deck-building, roguelike progression, and turn-based combat. Players create a character, build their deck of cards, and venture through a procedurally generated dungeon filled with enemies, treasures, and events.
+
+## Features
+
+- **Character Creation**: Create and customize your hero with different classes
+- **Deck Building**: Collect and manage cards to build a powerful deck
+- **Turn-Based Combat**: Strategic combat system using cards for attacks, defense, and special abilities
+- **Roguelike Progression**: Permadeath with persistent unlocks between runs
+- **Item Shop**: Buy new cards, potions, and equipment to enhance your character
+- **Inventory System**: Manage collected items during your adventure
+- **Core DAO & NFT Integration**: Blockchain-based progression system with NFT rewards and SBTs
+
+## Architecture
+
+The project is built with the following technologies:
+
+- Nextjs 15
 - TypeScript
 - Tailwind CSS
-- shadcn/ui Components
-- Zustand (State Management)
-- Lucide React (Icons)
+- ShadCN UI Component Library
 
-### Web3 Integration
-- Wagmi (Ethereum Integration)
-- @solana/web3.js (Solana Integration)
-- Multi-chain Support (Ethereum & Solana)
-- Smart Contract Integration (ERC721)
-- NFT-based Game Mechanics
+### Data Storage
 
-### Backend
-- MongoDB (via Prisma ORM)
-- Next.js API Routes
-- Prisma Client
-- HTTP-only Cookie Authentication
+Currently, the game uses localStorage for data persistence. Here's how the data is structured:
 
-### Smart Contracts
-- Solidity 0.8.20
-- ERC721 Implementation
-- Custom Gaming Features
-- On-chain Events
-
-## Current Features
-
-### Authentication System
-- Email/Password Authentication
-- Secure HTTP-only Cookie Sessions
-- Password Hashing with bcrypt
-- JWT Token Management
-- Account Settings Management
-- Wallet Connection Integration
-
-### Web3 Integration
-- Wallet Connection (MetaMask & Phantom)
-- NFT Ownership Verification
-- NFT-based Bonus System
-- On-chain Event Tracking
-- Multi-chain Support
-- Wallet Management in Settings
-
-### Character System
-- Character Creation with Multiple Classes:
-  - Warrior (High HP, Defensive Abilities)
-  - Mage (Powerful Spells, High Energy)
-  - Rogue (Agile, Card Draw Mechanics)
-- Experience & Leveling System
-- Gold Currency
-- Health & Energy Management
-- Equipment System
-- Character Stats & Effects
-
-### NFT Features
-- NFT-based Bonus System
-  - Increased Treasure Rewards
-  - Rarity Boost for Items
-  - Exclusive Cards
-  - Bonus Gold
-- On-chain Event Tracking
-- NFT Metadata Integration
-- Rarity-based Bonuses
-
-### Combat System
-- Turn-based Card Combat
-- Deck Building Mechanics
-- Energy Management
-- Status Effects System
-- Block & Damage Calculations
-- Victory/Defeat Conditions
-- Experience & Gold Rewards
-
-### Game Map & Progression
-- Node-based Progression
-- Multiple Path Options:
-  - Battles (Normal/Elite/Boss)
-  - Merchant Shops
-  - Rest Sites
-  - Treasure Rooms
-  - Mystery Events
-- Dynamic Difficulty Scaling
-
-## Recent Updates
-
-### Enhanced Battle UI
-- **Visually Engaging Battle Screen**: Completely redesigned battle interface with gradients, animations, and improved card layouts
-- **Enemy Visualization**: Added enemy avatars and visual representations
-- **Card Type Styling**: Cards now have distinct visual styles based on type (Attack, Skill, Power)
-- **Battle Animations**: Added animations for attacks, skills, and other actions
-- **Status Effect Icons**: Visual indicators for all status effects
-- **Improved Health/Energy Display**: Enhanced UI for player and enemy stats
-
-### UI/UX Improvements
-- **Fixed Header Layout**: Resolved overlapping issues with the game header
-- **Responsive Design**: Better mobile and desktop experience
-- **Animation System**: Added new animations for battle effects, card interactions, and transitions
-- **Visual Feedback**: Improved feedback for player actions and game events
-- **Card Design**: Enhanced card visuals with gradients, icons, and better typography
-- **Battle Arena**: Added a dedicated battle arena section for visualizing combat
-
-### Technical Improvements
-- **Type Safety**: Fixed TypeScript errors related to ConsumableType enum
-- **Animation Framework**: Added custom animation keyframes in global CSS
-- **Layout Adjustments**: Fixed spacing and positioning throughout the application
-- **Performance Optimizations**: Improved rendering performance for battle animations
-- **Code Structure**: Better organization of battle logic and UI components
-
-### Consumable System
-- **Consumable Type Handling**: Improved handling of consumable types with string-based approach
-- **Reward System Integration**: Enhanced integration between battle rewards and consumable items
-- **Shop Integration**: Better consumable display and interaction in the shop
-
-### Work in Progress
-
-### NFT System Enhancements
-- [ ] NFT Minting Interface
-- [ ] Token URI Metadata System
-- [ ] NFT Staking Mechanics
-- [ ] Dynamic Bonus Calculation
-- [ ] NFT Trading System
-- [ ] Multiple NFT Support
-- [ ] Cross-chain NFT Recognition
-
-### Gameplay Features
-- [ ] NFT-exclusive Areas
-- [ ] Special Events for NFT Holders
-- [ ] Enhanced Reward System
-- [ ] Collaborative Features
-- [ ] PvP Battle System
-- [ ] Achievement System
-- [ ] Leaderboard Integration
-
-### Smart Contract Updates
-- [ ] NFT Staking Contract
-- [ ] Reward Distribution System
-- [ ] Governance Features
-- [ ] Token Integration
-- [ ] Battle Verification System
-- [ ] Automated Reward Distribution
-
-### Technical Improvements
-- [ ] Gas Optimization
-- [ ] Contract Security Audits
-- [ ] Multi-chain Bridge
-- [ ] IPFS Integration
-- [ ] Metadata Standards
-- [ ] Event Indexing
-
-## Getting Started
-
-1. Clone the repository
-```bash
-git clone <repository-url>
-cd project-gamify
+```javascript
+{
+  "characters": [...],     // Player characters data
+  "activeCharacter": {...}, // Currently selected character
+  "gamePhase": "...",      // Current game phase
+  "user": {...},           // User account data
+  // Other game state properties
+}
 ```
 
-2. Install dependencies
+### Future Database Integration
+
+For future database integration, we've prepared a simple data synchronization utility. This will enable a smooth transition from localStorage to a proper database.
+
+```typescript
+/**
+ * Simulates syncing localStorage data with a database
+ */
+export const syncWithDatabase = async () => {
+  try {
+    // Get data from localStorage
+    const gameData = JSON.parse(
+      localStorage.getItem('cryptOfGreedData') || '{}'
+    );
+
+    // Log the sync attempt (will be replaced with API call)
+    console.log('Syncing with database:', gameData);
+
+    // Success placeholder
+    return true;
+  } catch (error) {
+    console.error('Database sync error:', error);
+    return false;
+  }
+};
+
+/**
+ * Simulates loading data from database to localStorage
+ */
+export const loadFromDatabase = async (userId: string) => {
+  try {
+    console.log('Loading data for user:', userId);
+
+    // In the future, this would fetch from a real database
+    return true;
+  } catch (error) {
+    console.error('Database load error:', error);
+    return false;
+  }
+};
+```
+
+When implementing a full database solution, consider:
+
+1. **User Authentication**: Secure login/signup with JWT
+2. **Real-time Syncing**: Periodic sync between localStorage and database
+3. **Offline Support**: Continue gameplay when offline, sync when connection returns
+4. **Data Validation**: Ensure data integrity before saving to prevent exploits
+
+## Core DAO Integration
+
+Crypt of Greed features a groundbreaking integration with the Core DAO blockchain, providing players with true ownership of in-game assets through NFTs (Non-Fungible Tokens) and SBTs (Soulbound Tokens). This integration enables a play-to-own model where game progress and achievements have tangible value.
+
+### NFT Progression System
+
+The game implements an innovative NFT progression system that includes:
+
+- **Starting Gear NFTs**: New players receive T0-tier equipment NFTs that serve as their starting gear
+- **NFT Tiers**: Equipment NFTs range from T0 (starter) to T5 (legendary), with increasing stats and abilities
+- **NFT Investment**: Players can "invest" their NFTs to increase difficulty and potential rewards
+- **Risk/Reward Mechanics**: Invested NFTs provide better rewards but risk permanent loss upon defeat
+
+### Core DAO Features
+
+The Core DAO integration (implemented in `nftUtils.ts`) includes:
+
+- **NFT Minting**: New equipment is minted as NFTs after victories
+- **Tiered Progression**: NFTs can be upgraded from T0 to T5 through gameplay
+- **Soulbound Tokens (SBTs)**: Achievement tokens that track player progression
+- **Difficulty Modifiers**: Players can stake their NFTs to modify game difficulty
+- **Burn Mechanics**: Invested NFTs may be permanently lost (burned) upon defeat
+
+### Technical Implementation
+
+The current implementation in `nftUtils.ts` provides simulated blockchain interactions for:
+
+- `assignStartingGear()`: Creates T0 NFTs for new players
+- `handleNFTProgression()`: Manages NFT rewards and burning based on battle outcomes
+- `applyDifficultyModifiers()`: Adjusts difficulty and rewards based on invested NFTs
+- `generateVictoryRewards()`: Creates NFT and SBT rewards upon victory
+- `upgradeNFT()`: Progresses NFTs through the tier system
+- `burnNFT()`: Removes invested NFTs from player wallet upon defeat
+
+For the hackathon implementation, these simulated blockchain interactions demonstrate the core gameplay mechanics while preparing for future integration with actual Core DAO smart contracts.
+
+### Future Blockchain Extensions
+
+Planned extensions to the Core DAO integration include:
+
+- **Smart Contract Integration**: Converting simulated functions to actual blockchain transactions
+- **Marketplace Integration**: Allowing players to trade their game NFTs
+- **Cross-Game Asset Utilization**: Enabling NFTs to be used across multiple compatible games
+- **DAO Governance**: Allowing players to vote on game updates and features
+- **Community Rewards**: Distributing rewards to active community members
+
+## Game Flow
+
+1. **Character Creation**: Player creates a new character
+2. **Map Navigation**: Player navigates through the dungeon map
+3. **Encounters**: Player faces enemies, shops, rest areas, and events
+4. **Combat**: Turn-based card combat with strategic decisions
+5. **Rewards**: Player earns gold, cards, items, and NFTs after victories
+6. **Progression**: Character levels up, gaining stronger abilities
+7. **Death or Victory**: Run ends with character death or dungeon completion
+
+## Development
+
+This project is developed using Vite, React, and TypeScript. To run the project locally:
+
 ```bash
+# Install dependencies
 npm install
-```
 
-3. Set up environment variables
-```env
-DATABASE_URL="your_mongodb_url"
-NEXT_PUBLIC_RPC_URL="your_ethereum_rpc_url"
-NEXT_PUBLIC_NFT_CONTRACT_ADDRESS="your_nft_contract_address"
-NEXT_PUBLIC_NETWORK="network_name" # mainnet, goerli, etc.
-JWT_SECRET="your_jwt_secret"
-```
-
-4. Run the development server
-```bash
+# Start development server
 npm run dev
-```
-
-## Smart Contract Deployment
-
-1. Deploy the NFT contract
-```bash
-npx hardhat run scripts/deploy.js --network <network>
-```
-
-2. Update the contract address in your environment variables
-
-3. Verify the contract on Etherscan
-```bash
-npx hardhat verify --network <network> <contract-address>
 ```
 
 ## Contributing
 
-We welcome contributions! Please feel free to submit a Pull Request.
-
-### Development Guidelines
-1. Follow the established code style
-2. Add tests for new features
-3. Update documentation
-4. Ensure all tests pass
-5. Submit detailed PR descriptions
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Security
-
-Please report any security issues to security@example.com
-
-## Support
-
-For support, please join our Discord community or open an issue on GitHub.

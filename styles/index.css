@@ -1,0 +1,200 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 222 47% 11%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 216 34% 17%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 222 84% 5%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5% 26%;
+    --sidebar-primary: 240 6% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 5% 96%;
+    --sidebar-accent-foreground: 240 6% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217 91% 60%;
+
+    /* Crypt of Greed colors */
+    --game-primary: 0 100% 27%; /* Deep blood red */
+    --game-secondary: 5 100% 18%; /* Darker blood red */
+    --game-accent: 43 80% 38%; /* Dark gold */
+    --game-card-bg: 220 20% 97%;
+    --game-card-border: 0 50% 60%;
+    --game-health: 0 76% 42%; /* Blood red */
+    --game-energy: 220 83% 53%; /* Deep blue */
+    --game-attack: 0 70% 36%; /* Dark red */
+    --game-defense: 201 96% 32%; /* Dark blue */
+  }
+
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 18%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 216 34% 17%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 33% 18%;
+    --input: 217 33% 18%;
+    --ring: 213 27% 84%;
+
+    --game-primary: 0 100% 27%; /* Deep blood red */
+    --game-secondary: 5 100% 18%; /* Darker blood red */
+    --game-accent: 43 80% 38%; /* Dark gold */
+    --game-card-bg: 220 20% 20%;
+    --game-card-border: 0 50% 30%;
+    --game-health: 0 76% 42%; /* Blood red */
+    --game-energy: 220 83% 53%; /* Deep blue */
+    --game-attack: 0 70% 36%; /* Dark red */
+    --game-defense: 201 96% 32%; /* Dark blue */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-md border border-red-900/20 shadow-lg;
+  }
+  
+  .game-card {
+    @apply relative overflow-hidden rounded-xl bg-game-card-bg border border-game-card-border shadow-md transition-all duration-300 ease-in-out hover:shadow-xl;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+  }
+  
+  .game-card:hover {
+    @apply border-game-primary/50;
+    transform: translateY(-8px) scale(1.02);
+  }
+  
+  .game-button {
+    @apply px-6 py-3 rounded-lg font-medium transition-all duration-300 shadow-md hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .game-primary-button {
+    @apply game-button bg-game-primary text-white hover:bg-game-primary/90;
+  }
+  
+  .game-secondary-button {
+    @apply game-button bg-game-secondary text-white hover:bg-game-secondary/90;
+  }
+  
+  .game-outline-button {
+    @apply game-button bg-transparent border-2 border-game-primary text-game-primary hover:bg-game-primary/10;
+  }
+  
+  .stat-container {
+    @apply flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium;
+  }
+  
+  .health-stat {
+    @apply stat-container bg-game-health/10 text-game-health;
+  }
+  
+  .energy-stat {
+    @apply stat-container bg-game-energy/10 text-game-energy;
+  }
+  
+  .attack-stat {
+    @apply stat-container bg-game-attack/10 text-game-attack;
+  }
+  
+  .defense-stat {
+    @apply stat-container bg-game-defense/10 text-game-defense;
+  }
+  
+  .page-transition {
+    @apply animate-fade-in;
+  }
+  
+  .card-container {
+    @apply flex flex-wrap justify-center gap-4 mt-8;
+  }
+  
+  .character-container {
+    @apply flex flex-col items-center p-6 rounded-xl glass-card;
+  }
+
+  /* Dark fantasy specific components */
+  .gothic-heading {
+    @apply font-['MedievalSharp'] text-red-900 drop-shadow-sm;
+  }
+  
+  .gold-accent {
+    @apply text-amber-700 drop-shadow-sm;
+  }
+  
+  .blood-border {
+    @apply border-red-900/30;
+  }
+  
+  .dark-card {
+    @apply bg-white border border-red-900/20 shadow-md;
+  }
+
+  /* Adding scrollbar hide utility for mobile card scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+}
