@@ -169,7 +169,7 @@ const Game: React.FC = () => {
         onLoginClick={() => setShowLoginModal(true)}
         onRegisterClick={() => setShowRegisterModal(true)}
       />
-      <main className="relative pb-16 pt-4">{renderGamePhase()}</main>
+      <main>{renderGamePhase()}</main>
 
       {state.activeCharacter && state.user?.isLoggedIn && <CharacterHUD />}
       {state.user?.isLoggedIn && <FloatingAccountButton />}
