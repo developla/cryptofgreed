@@ -1,0 +1,159 @@
+
+/* Import Google Fonts - must be the first statement */
+@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel:wght@400;700&display=swap');
+
+/* ... keep existing code */
+
+/* Character Stats Cards */
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.stat-card .stat-value {
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: block;
+}
+
+.stat-card .stat-label {
+  font-size: 0.7rem;
+  color: #64748b;
+  display: block;
+}
+
+/* Game Theme Colors */
+:root {
+  /* Crypt of Greed Dark Fantasy Theme */
+  --game-primary: #8b0000; /* Deep blood red */
+  --game-secondary: #5c0700; /* Darker blood red */
+  --game-accent: #b8860b; /* Dark gold */
+  --game-dark: #1A1F2C; /* Dark purple-black */
+  --game-light: #F1F0FB; /* Pale white */
+  --game-health: #b91c1c; /* Blood red */
+  --game-energy: #2563eb; /* Deep blue */
+  --game-defense: #0369a1; /* Dark blue */
+  --game-attack: #991b1b; /* Dark red */
+}
+
+.game-primary-button {
+  background-color: var(--game-primary);
+  color: white;
+}
+
+/* Remove hover effects */
+.no-hover-effect:hover {
+  background-color: inherit !important;
+  color: inherit !important;
+  border-color: inherit !important;
+}
+
+.no-underline:hover {
+  text-decoration: none !important;
+}
+
+.bg-game-primary {
+  background-color: var(--game-primary);
+}
+
+.bg-game-secondary {
+  background-color: var(--game-secondary);
+}
+
+.bg-game-accent {
+  background-color: var(--game-accent);
+}
+
+.bg-game-health {
+  background-color: var(--game-health);
+}
+
+.bg-game-energy {
+  background-color: var(--game-energy);
+}
+
+.bg-game-defense {
+  background-color: var(--game-defense);
+}
+
+.bg-game-attack {
+  background-color: var(--game-attack);
+}
+
+.text-game-primary {
+  color: var(--game-primary);
+}
+
+.text-game-health {
+  color: var(--game-health);
+}
+
+.text-game-energy {
+  color: var(--game-energy);
+}
+
+.text-game-defense {
+  color: var(--game-defense);
+}
+
+.text-game-attack {
+  color: var(--game-attack);
+}
+
+.text-game-accent {
+  color: var(--game-accent);
+}
+
+/* Glass Card Effect */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}
+
+/* Dark fantasy specific styles */
+.gothic-text {
+  font-family: 'MedievalSharp', serif;
+}
+
+.title-text {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+}
+
+.crypt-card {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(139, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.gold-accent {
+  color: var(--game-accent);
+  text-shadow: 0 0 3px rgba(184, 134, 11, 0.3);
+}
+
+/* Animated background elements */
+.flickering-light {
+  animation: flicker 3s infinite alternate;
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  25% { opacity: 0.85; }
+  50% { opacity: 0.9; }
+  75% { opacity: 0.8; }
+}
+
+.floating-element {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
