@@ -5,8 +5,13 @@ const STORAGE_KEY = 'crypt_of_greed_game_state';
 const SESSION_KEY = 'crypt_of_greed_user_session';
 const USERS_KEY = 'crypt_of_greed_registered_users';
 
+// Helper function to check if we're in browser environment
+const isBrowser = () => typeof window !== 'undefined';
+
 // Game state management
 export const saveGameState = (state: GameState): void => {
+  if (!isBrowser()) return;
+  
   try {
     const serializedState = JSON.stringify(state);
     localStorage.setItem(STORAGE_KEY, serializedState);
@@ -23,6 +28,8 @@ export const saveGameState = (state: GameState): void => {
 };
 
 export const loadGameState = (): GameState | null => {
+  if (!isBrowser()) return null;
+  
   try {
     const serializedState = localStorage.getItem(STORAGE_KEY);
     if (!serializedState) {
@@ -30,7 +37,6 @@ export const loadGameState = (): GameState | null => {
       const userSession = loadUserSession();
       if (userSession) {
         console.log('No game state found, but user session recovered');
-        // Return a minimal state with just the user info
         return {
           characters: [],
           activeCharacter: null,
@@ -38,7 +44,7 @@ export const loadGameState = (): GameState | null => {
           inBattle: false,
           turn: 'player',
           round: 1,
-          battleTurn: 1, // Add the battleTurn property
+          battleTurn: 1,
           gamePhase: 'character-selection',
           temporaryEffects: {
             playerDefense: 0,
@@ -62,6 +68,8 @@ export const loadGameState = (): GameState | null => {
 };
 
 export const clearGameState = (): void => {
+  if (!isBrowser()) return;
+  
   try {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(SESSION_KEY);
@@ -73,6 +81,8 @@ export const clearGameState = (): void => {
 
 // User session specific management
 export const saveUserSession = (user: GameState['user']): void => {
+  if (!isBrowser()) return;
+  
   try {
     if (!user) return;
     const serializedUser = JSON.stringify(user);
@@ -84,12 +94,14 @@ export const saveUserSession = (user: GameState['user']): void => {
 };
 
 export const loadUserSession = (): GameState['user'] | null => {
+  if (!isBrowser()) return null;
+  
   try {
     const serializedUser = localStorage.getItem(SESSION_KEY);
     if (!serializedUser) return null;
     return JSON.parse(serializedUser);
   } catch (error) {
-    console.error('Failed to load user session from localStorage:', error);
+    console.error('Failed to load user session:', error);
     return null;
   }
 };

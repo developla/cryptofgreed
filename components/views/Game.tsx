@@ -19,19 +19,17 @@ import { loadUserSession } from '@/lib/storage';
 
 const Game: React.FC = () => {
   const { state, dispatch } = useGame();
+  const [isClient, setIsClient] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const transitionTimeoutRef = useRef<number | null>(null);
 
-  console.log('Current game phase:', state.gamePhase);
-  console.log('User state:', state.user ? state.user.username : 'None');
-  console.log(
-    'Active character:',
-    state.activeCharacter ? state.activeCharacter.name : 'None'
-  );
-  console.log('Battle mode:', state.inBattleMode ? 'ON' : 'OFF');
+  // 1. Client-side initialization effect
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
-  // Force return to battle if in battle mode but not on allowed pages
+  // 2. Battle mode enforcement effect
   useEffect(() => {
     if (state.inBattleMode && state.inBattle) {
       const allowedPhasesInBattle = ['battle', 'inventory-system'];
@@ -42,7 +40,7 @@ const Game: React.FC = () => {
     }
   }, [state.gamePhase, state.inBattleMode, state.inBattle, dispatch]);
 
-  // Check for user session on startup
+  // 3. User session check effect
   useEffect(() => {
     if (!state.user?.isLoggedIn) {
       const userSession = loadUserSession();
@@ -66,7 +64,7 @@ const Game: React.FC = () => {
     }
   }, [dispatch, state.user]);
 
-  // Handle default game phase and login modal
+  // 4. Game phase and login modal effect
   useEffect(() => {
     if (!state.gamePhase) {
       dispatch({ type: 'NAVIGATE', payload: 'menu' });
@@ -77,7 +75,7 @@ const Game: React.FC = () => {
     }
   }, [state.gamePhase, state.user, dispatch, showLoginModal, showRegisterModal]);
 
-  // Close modals if user is logged in
+  // 5. Modal management effect
   useEffect(() => {
     if (state.user?.isLoggedIn) {
       setShowLoginModal(false);
@@ -85,7 +83,7 @@ const Game: React.FC = () => {
     }
   }, [state.user?.isLoggedIn]);
 
-  // Transition timeout: force navigation if state is stuck
+  // 6. Transition timeout effect
   useEffect(() => {
     const isTransitioning = ![
       'menu',
@@ -118,6 +116,18 @@ const Game: React.FC = () => {
       }
     };
   }, [state.gamePhase, state.inBattleMode, state.inBattle, dispatch]);
+
+  if (!isClient) {
+    return <div className="min-h-screen bg-slate-900" />;
+  }
+
+  console.log('Current game phase:', state.gamePhase);
+  console.log('User state:', state.user ? state.user.username : 'None');
+  console.log(
+    'Active character:',
+    state.activeCharacter ? state.activeCharacter.name : 'None'
+  );
+  console.log('Battle mode:', state.inBattleMode ? 'ON' : 'OFF');
 
   // Handlers for modal switching
   const handleRegisterClick = () => {

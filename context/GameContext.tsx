@@ -1,5 +1,5 @@
 
-'use client'
+'use client';
 import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
 import { loadGameState } from '../lib/storage';
 import { gameReducer } from './gameReducer';
