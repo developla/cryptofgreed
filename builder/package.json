@@ -1,5 +1,5 @@
 {
-  "name": "softcore-nft-builder",
+  "name": "crypt-of-greed-nft-builder",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
@@ -24,6 +24,6 @@
     "typechain": "^8.3.0"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.2.0"
+    "@openzeppelin/contracts": "5.2.0"
   }
 }
