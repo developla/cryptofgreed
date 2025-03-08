@@ -88,10 +88,12 @@ let playerWallet: {
   equippedNFTs: GameNFT[];
   inventoryNFTs: GameNFT[];
   progressionSBTs: ProgressionSBT[];
+  address: string;
 } = {
   equippedNFTs: [],
   inventoryNFTs: [],
-  progressionSBTs: []
+  progressionSBTs: [],
+  address: '0x0000000000000000000000000000000000000000' // Default address
 };
 
 // Initialize wallet with starting gear
@@ -99,84 +101,89 @@ if (playerWallet.equippedNFTs.length === 0) {
   playerWallet.equippedNFTs = assignStartingGear();
 }
 
+// Keep the metadata generation functions
+const generateMetadata = (nft: GameNFT) => ({
+  name: nft.name,
+  description: `A ${nft.rarity} ${nft.type} of tier ${nft.tier}`,
+  image: `https://placehold.co/400x400?text=${nft.name}`,
+  attributes: nft.stats
+});
+
+const uploadToIPFS = async (metadata: any) => {
+  // Temporary solution returning a mock URI
+  return `ipfs://mock-${Date.now()}`;
+};
+
 /**
  * Handle NFT progression based on battle outcome
- * Simulates actual blockchain operations for testing
+ * Calls backend API for blockchain operations
  */
-export const handleNFTProgression = (outcome: NFTProgressionOutcome, playerLevel: number): void => {
-  console.log(`%c🔗 BLOCKCHAIN SIMULATION: NFT Progression triggered for ${outcome}`, 'background: #222; color: #bada55; padding: 2px 5px; border-radius: 3px;');
-  
-  // Simulate blockchain transaction delay
-  setTimeout(() => {
-    try {
-      if (outcome === 'victory') {
-        // Generate rewards
-        const { difficultyMultiplier, rewardMultiplier } = applyDifficultyModifiers(
-          [{ id: 'default', name: 'Standard', description: 'Standard difficulty', rewardMultiplier: 1, riskMultiplier: 1 }],
-          playerWallet.equippedNFTs.filter(nft => nft.isInvested)
-        );
-        
-        // Generate rewards based on victory
-        const rewards = generateVictoryRewards(playerLevel, rewardMultiplier);
-        
-        // Add NFT to wallet
-        if (rewards.nft) {
-          playerWallet.inventoryNFTs.push(rewards.nft);
-          console.log(`%c🎁 NFT MINTED: ${rewards.nft.name} (${rewards.nft.tier})`, 'background: #004d00; color: #7fff7f; padding: 2px 5px; border-radius: 3px;');
-        }
-        
-        // Add SBT to wallet
-        if (rewards.sbt) {
-          playerWallet.progressionSBTs.push(rewards.sbt);
-          console.log(`%c📜 SBT GRANTED: Level ${rewards.sbt.level} progression token`, 'background: #00008b; color: #add8e6; padding: 2px 5px; border-radius: 3px;');
-        }
-        
-        // Upgrade lowest tier NFT
-        if (playerWallet.equippedNFTs.length > 0) {
-          const lowestTierNFT = [...playerWallet.equippedNFTs].sort((a, b) => {
-            const tierOrder = { 'T0': 0, 'T1': 1, 'T2': 2, 'T3': 3, 'T4': 4, 'T5': 5 };
-            return tierOrder[a.tier] - tierOrder[b.tier];
-          })[0];
-          
-          const upgradedNFT = upgradeNFT(lowestTierNFT);
-          
-          // Replace the old NFT with the upgraded one
-          playerWallet.equippedNFTs = playerWallet.equippedNFTs.map(nft => 
-            nft.id === lowestTierNFT.id ? upgradedNFT : nft
-          );
-          
-          console.log(`%c⬆️ NFT UPGRADED: ${lowestTierNFT.name} from ${lowestTierNFT.tier} to ${upgradedNFT.tier}`, 'background: #8b0000; color: #ffa07a; padding: 2px 5px; border-radius: 3px;');
-        }
-        
-      } else if (outcome === 'defeat') {
-        // Only apply burn penalty if there are invested NFTs
-        const investedNFTs = playerWallet.equippedNFTs.filter(nft => nft.isInvested);
-        
-        if (investedNFTs.length > 0) {
-          const burnedNFTId = burnNFT(investedNFTs);
-          
-          if (burnedNFTId) {
-            // Remove the burned NFT from the wallet
-            const burnedNFT = playerWallet.equippedNFTs.find(nft => nft.id === burnedNFTId);
-            playerWallet.equippedNFTs = playerWallet.equippedNFTs.filter(nft => nft.id !== burnedNFTId);
-            
-            console.log(`%c🔥 NFT BURNED: ${burnedNFT?.name} (${burnedNFT?.tier})`, 'background: #8b0000; color: #ffa07a; padding: 2px 5px; border-radius: 3px;');
-          }
-        } else {
-          console.log('%c⚠️ No invested NFTs to burn', 'color: #ffa500; font-weight: bold;');
-        }
+export const handleNFTProgression = async (outcome: NFTProgressionOutcome, playerLevel: number) => {
+  try {
+    if (outcome === 'victory') {
+      // Calculate modifiers based on invested NFTs
+      const { rewardMultiplier } = applyDifficultyModifiers([], playerWallet.equippedNFTs.filter(nft => nft.isInvested));
+      
+      // Generate rewards using calculated multiplier
+      const rewards = generateVictoryRewards(playerLevel, rewardMultiplier);
+      if (!rewards.nft) {
+        throw new Error('No NFT generated in rewards');
       }
+      const metadata = generateMetadata(rewards.nft);
+      const uri = await uploadToIPFS(metadata);
       
-      // Log the current state of the wallet
-      console.log('%c💼 WALLET STATE:', 'font-weight: bold; color: #9370db;');
-      console.log('Equipped NFTs:', playerWallet.equippedNFTs);
-      console.log('Inventory NFTs:', playerWallet.inventoryNFTs);
-      console.log('Progression SBTs:', playerWallet.progressionSBTs);
+      // Mint NFT via API
+      const response = await fetch('/api/contract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'mint',
+          playerAddress: playerWallet.address,
+          uri,
+          tier: rewards.nft.tier
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to mint NFT');
+      }
+
+      const { tokenId } = await response.json();
       
-    } catch (error) {
-      console.error('%c❌ BLOCKCHAIN SIMULATION ERROR:', 'color: red; font-weight: bold;', error);
+      // Update local state
+      playerWallet.inventoryNFTs.push({
+        ...rewards.nft,
+        id: tokenId.toString()
+      });
+    } else {
+      // Handle defeat - burn invested NFTs
+      const investedNFTs = playerWallet.equippedNFTs.filter(nft => nft.isInvested);
+      
+      for (const nft of investedNFTs) {
+        // Burn NFT via API
+        const response = await fetch('/api/contract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'burn',
+            tokenId: parseInt(nft.id)
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to burn NFT ${nft.id}`);
+        }
+        
+        // Update local state
+        playerWallet.equippedNFTs = playerWallet.equippedNFTs.filter(
+          item => item.id !== nft.id
+        );
+      }
     }
-  }, 1500); // Simulate blockchain transaction time
+  } catch (error) {
+    console.error('Error handling NFT progression:', error);
+    throw error;
+  }
 };
 
 /**
@@ -421,18 +428,22 @@ export const getWalletState = () => {
 /**
  * Invest an NFT to modify game difficulty
  */
-export const investNFT = (nftId: string, invest: boolean): boolean => {
-  const nftIndex = playerWallet.equippedNFTs.findIndex(nft => nft.id === nftId);
-  
-  if (nftIndex === -1) {
-    console.log(`%c❌ NFT NOT FOUND: ${nftId}`, 'color: red;');
-    return false;
+export const investNFT = async (nft: GameNFT): Promise<void> => {
+  try {
+    await fetch('/api/contract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'invest',
+        tokenId: parseInt(nft.id)
+      })
+    });
+    
+    nft.isInvested = true;
+  } catch (error) {
+    console.error('Error investing NFT:', error);
+    throw error;
   }
-  
-  playerWallet.equippedNFTs[nftIndex].isInvested = invest;
-  console.log(`%c${invest ? '🔒 NFT INVESTED' : '🔓 NFT UNINVESTED'}: ${playerWallet.equippedNFTs[nftIndex].name}`, 'color: #9370db;');
-  
-  return true;
 };
 
 /**
@@ -442,7 +453,8 @@ export const resetWallet = () => {
   playerWallet = {
     equippedNFTs: [],
     inventoryNFTs: [],
-    progressionSBTs: []
+    progressionSBTs: [],
+    address: '0x0000000000000000000000000000000000000000' // Adding the required address property
   };
   playerWallet.equippedNFTs = assignStartingGear();
   console.log('%c💼 WALLET RESET TO INITIAL STATE', 'font-weight: bold; color: #9370db;');

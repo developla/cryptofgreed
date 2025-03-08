@@ -1,15 +1,36 @@
 import { ethers } from 'ethers';
 import CryptOfGreedNFT from '@/abi/CryptOfGreedNFT.json';
 
+// This service should only be used in API routes or server components
 export class ContractService {
   private contract: ethers.Contract;
   private provider: ethers.Provider;
   private signer: ethers.Signer;
 
   constructor(contractAddress: string) {
-    this.provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_CORE_RPC_URL);
-    this.signer = new ethers.Wallet(process.env.PRIVATE_KEY!, this.provider);
-    this.contract = new ethers.Contract(contractAddress, CryptOfGreedNFT.abi, this.signer);
+    // This will only work in API routes or server components
+    if (typeof window !== 'undefined') {
+      throw new Error('ContractService should only be instantiated on the server side');
+    }
+
+    if (!process.env.PRIVATE_KEY) {
+      throw new Error('Private key is not configured in server environment');
+    }
+
+    try {
+      this.provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_CORE_RPC_URL);
+      
+      let privateKey = process.env.PRIVATE_KEY.trim();
+      if (!privateKey.startsWith('0x')) {
+        privateKey = `0x${privateKey}`;
+      }
+
+      this.signer = new ethers.Wallet(privateKey, this.provider);
+      this.contract = new ethers.Contract(contractAddress, CryptOfGreedNFT.abi, this.signer);
+    } catch (error) {
+      console.error('ContractService initialization error:', error);
+      throw error;
+    }
   }
 
   async mintGameItem(playerAddress: string, uri: string, tier: string): Promise<number> {

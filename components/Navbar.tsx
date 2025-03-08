@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useGame } from '@/context/GameContext';
+import { useWallet } from '@/context/WalletContext';
 import { LogIn, LogOut, Wallet, UserPlus, Skull } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -29,9 +30,11 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onRegisterClick }) => {
   const { state, dispatch } = useGame();
   const { toast } = useToast();
-  const [walletConnected, setWalletConnected] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { inBattleMode } = state;
+  
+  // Replace the walletConnected state with the wallet context
+  const { isConnected, address, connect, disconnect } = useWallet();
 
   const handleLogout = () => {
     // Block logout during battle
@@ -72,8 +75,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onRegisterClick }) => {
     dispatch({ type: 'NAVIGATE', payload: 'menu' });
   };
 
-  const handleConnectWallet = () => {
-    // Block wallet connection during battle
+  const handleConnectWallet = async () => {
     if (inBattleMode) {
       toast({
         title: 'Action Blocked',
@@ -83,15 +85,22 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onRegisterClick }) => {
       return;
     }
 
-    setWalletConnected(true);
-    toast({
-      title: 'Wallet Connected',
-      description: 'Your wallet has been connected successfully.',
-    });
+    try {
+      await connect();
+      toast({
+        title: 'Wallet Connected',
+        description: 'Your wallet has been connected successfully.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Connection Failed',
+        description: 'Failed to connect wallet. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleDisconnectWallet = () => {
-    // Block wallet disconnection during battle
     if (inBattleMode) {
       toast({
         title: 'Action Blocked',
@@ -101,7 +110,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onRegisterClick }) => {
       return;
     }
 
-    setWalletConnected(false);
+    disconnect();
     toast({
       title: 'Wallet Disconnected',
       description: 'Your wallet has been disconnected.',
@@ -133,7 +142,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onRegisterClick }) => {
                 </span>
 
                 {/* Wallet Connection UI */}
-                {walletConnected ? (
+                {isConnected ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -143,7 +152,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onRegisterClick }) => {
                       >
                         <Wallet className="h-4 w-4" />
                         <span className="hidden md:inline-block">
-                          Connected
+                          {address?.slice(0, 6)}...{address?.slice(-4)}
                         </span>
                       </Button>
                     </DropdownMenuTrigger>
