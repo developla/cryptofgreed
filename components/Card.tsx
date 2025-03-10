@@ -72,13 +72,13 @@ const Card: React.FC<CardProps> = ({
       className={`game-card ${getCardColor()} ${getRarityClass()} ${className} ${
         disabled
           ? 'cursor-not-allowed opacity-60'
-          : 'cursor-pointer hover:scale-105'
+          : 'cursor-pointer hover:scale-80'
       } group relative flex h-[200px] w-[150px] flex-col overflow-hidden transition-all duration-300 ease-in-out`}
       onClick={!disabled ? onClick : undefined}
     >
       {/* Card Cost */}
-      <div className="absolute left-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-game-energy font-bold text-white">
-        {card.energyCost}
+      <div className="absolute left-2 top-2 bottom-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-game-energy font-bold text-white">
+        <span className="text-xs">{card.energyCost}</span>
       </div>
 
       {/* Upgraded Badge */}
@@ -90,13 +90,13 @@ const Card: React.FC<CardProps> = ({
       )}
 
       {/* Card Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white/90 px-3 py-2 backdrop-blur-sm">
-        <h3 className="w-20 truncate text-sm font-semibold">{card.name}</h3>
-        <div className="text-slate-700">{getCardIcon()}</div>
+      <div className="flex justify-self-end justify-end items-end border-b border-slate-200 bg-white/90 px-3 py-2 backdrop-blur-sm">
+        <div className="text-slate-700 justify-self-end">{getCardIcon()}</div>
       </div>
 
       {/* Card Body */}
-      <div className="flex flex-grow flex-col justify-between p-3">
+      <div className="flex flex-grow flex-col justify-between p-3 gap-4">
+        <h3 className="w-20 truncate text-sm font-semibold">{card.name}</h3>
         <p className="flex-grow text-xs text-slate-600">{card.description}</p>
 
         {/* Card Value */}

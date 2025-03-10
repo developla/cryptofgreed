@@ -208,14 +208,16 @@ const DeckView: React.FC = () => {
             {filteredCards.map((card) => (
               <div
                 key={card.id}
-                className={`flex justify-center ${
-                  selectedCardId === card.id
-                    ? 'ring-game-primary rounded-lg ring-2'
-                    : ''
-                }`}
+                className="flex justify-center"
                 onClick={() => handleSelectCard(card.id)}
               >
-                <CardComponent card={card} />
+                <div className={`relative ${
+                  selectedCardId === card.id
+                    ? 'after:absolute after:inset-0 after:rounded-xl after:border-2 after:border-black'
+                    : ''
+                }`}>
+                  <CardComponent card={card} />
+                </div>
               </div>
             ))}
           </div>
