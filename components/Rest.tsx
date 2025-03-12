@@ -258,16 +258,16 @@ const Rest: React.FC = () => {
               {state.activeCharacter.deck.map((card) => (
                 <div
                   key={card.id}
-                  className={`relative cursor-pointer ${
-                    selectedCard?.id === card.id
-                      ? 'rounded-lg ring-2 ring-red-500'
-                      : ''
-                  }`}
-                  onClick={() =>
-                    canRemoveCard && handleSelectCardForAction(card)
-                  }
+                  className="flex justify-center"
+                  onClick={() => canRemoveCard && handleSelectCardForAction(card)}
                 >
-                  <CardComponent card={card} />
+                  <div className={`relative ${
+                    selectedCard?.id === card.id
+                      ? 'after:absolute after:inset-0 after:rounded-xl after:border-2 after:border-red-500'
+                      : ''
+                  }`}>
+                    <CardComponent card={card} />
+                  </div>
                 </div>
               ))}
             </div>
@@ -345,23 +345,23 @@ const Rest: React.FC = () => {
               {state.activeCharacter.deck.map((card) => (
                 <div
                   key={card.id}
-                  className={`relative cursor-pointer ${
-                    selectedCard?.id === card.id
-                      ? 'rounded-lg ring-2 ring-game-primary'
-                      : ''
-                  } ${card.upgraded ? 'opacity-50' : ''}`}
-                  onClick={() =>
-                    !card.upgraded && handleSelectCardForAction(card)
-                  }
+                  className="flex justify-center"
+                  onClick={() => !card.upgraded && handleSelectCardForAction(card)}
                 >
-                  <CardComponent card={card} />
-                  {card.upgraded && (
-                    <div className="absolute bottom-0 left-0 right-0 top-0 flex items-center justify-center rounded-lg bg-black/20">
-                      <div className="rounded bg-amber-500 px-2 py-1 text-xs text-white">
-                        Already Upgraded
+                  <div className={`relative transition-all duration-300 ${
+                    selectedCard?.id === card.id
+                      ? 'after:absolute after:inset-0 after:rounded-xl after:border-2 after:border-game-primary after:transition-all after:duration-300'
+                      : ''
+                  }`}>
+                    <CardComponent card={card} />
+                    {card.upgraded && (
+                      <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/20 transition-opacity duration-300">
+                        <div className="rounded bg-amber-500 px-2 py-1 text-xs text-white opacity-50 transition-opacity duration-300 hover:opacity-100">
+                          Already Upgraded
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
