@@ -8,6 +8,7 @@ import {
   Save,
   Edit,
   Mail,
+  LogOut,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,6 +31,10 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { AlertDialog, AlertDialogDescription, AlertDialogCancel, AlertDialogAction, AlertDialogContent, AlertDialogTitle } from '@radix-ui/react-alert-dialog';
+import { AlertDialogHeader } from './ui/alert-dialog';
+import { AlertDialogFooter } from './ui/alert-dialog';
+import { clearGameState, clearUserSession } from '@/lib/storage';
 
 interface UserAccountPopupProps {
   isOpen: boolean;
@@ -51,14 +56,42 @@ const UserAccountPopup: React.FC<UserAccountPopupProps> = ({
   onClose,
 }) => {
   const { state, dispatch } = useGame();
-  const { user } = state;
+  const { user, inBattleMode } = state;
   const { toast } = useToast();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editedUsername, setEditedUsername] = useState('');
   const [editedEmail, setEditedEmail] = useState('');
 
   if (!isOpen || !user) return null;
+
+  // handle logout
+  const handleLogout = () => {
+    // Block logout during battle
+    if (inBattleMode) {
+      toast({
+        title: 'Action Blocked',
+        description: 'Cannot log out during battle!',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Clear all local storage completely
+    clearGameState();
+    clearUserSession();
+    localStorage.clear(); // Additional cleanup to ensure everything is removed
+
+    // Reset the game state completely
+    dispatch({ type: 'LOGOUT' });
+
+    toast({
+      title: 'Logged out',
+      description:
+        'You have been logged out successfully. All game data has been reset.',
+    });
+  };
 
   // Open the edit dialog and populate with current values
   const handleEditClick = () => {
@@ -277,6 +310,27 @@ const UserAccountPopup: React.FC<UserAccountPopupProps> = ({
               <span>Support</span>
             </Button>
           </div>
+          <div className="grid grid-cols-1 gap-2 items-center justify-center first:">
+        
+          <Button
+                  variant="outline"
+                  className={`flex items-center gap-2  border-amber-700/30 text-red-700 hover:bg-red-50 ${inBattleMode ? 'cursor-not-allowed opacity-50' : ''}`}
+                  onClick={() => {
+                    if (inBattleMode) {
+                      toast({
+                        title: 'Action Blocked',
+                        description: 'Cannot log out during battle!',
+                        variant: 'destructive',
+                      });
+                      return;
+                    }
+                    setShowLogoutConfirm(true);
+                  }}
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden md:inline-block">Logout</span>
+                </Button>
+          </div>
         </CardContent>
 
 
@@ -354,6 +408,37 @@ const UserAccountPopup: React.FC<UserAccountPopupProps> = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+       {/* Logout Confirmation Dialog */}
+       <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 z-50 animate-in fade-in bg-black/60 backdrop-blur-sm duration-200" />
+        )}
+        <AlertDialogContent className="fixed left-[50%] top-[50%] z-[51] w-full max-w-md translate-x-[-50%] translate-y-[-50%] rounded-xl border border-slate-200 bg-white p-6 shadow-lg duration-200">
+          <AlertDialogHeader className="space-y-3">
+            <AlertDialogTitle className="text-center text-xl font-semibold text-red-800">
+              Are you sure you want to logout?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-base text-slate-600">
+              Logging out will reset all game progress. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-6 flex gap-3">
+            <AlertDialogCancel 
+              className="flex-1 rounded-lg border-2 border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              onClick={() => setShowLogoutConfirm(false)}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLogout}
+              className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+            >
+              Logout
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

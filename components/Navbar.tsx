@@ -182,24 +182,6 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onRegisterClick }) => {
                   </Button>
                 )}
 
-                <Button
-                  variant="outline"
-                  className={`flex items-center gap-2 border-red-700 text-red-700 hover:bg-red-50 ${inBattleMode ? 'cursor-not-allowed opacity-50' : ''}`}
-                  onClick={() => {
-                    if (inBattleMode) {
-                      toast({
-                        title: 'Action Blocked',
-                        description: 'Cannot log out during battle!',
-                        variant: 'destructive',
-                      });
-                      return;
-                    }
-                    setShowLogoutConfirm(true);
-                  }}
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span className="hidden md:inline-block">Logout</span>
-                </Button>
               </>
             )}
 
@@ -228,31 +210,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onRegisterClick }) => {
         </div>
       </div>
 
-      {/* Logout Confirmation Dialog */}
-      <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
-        <AlertDialogContent className="border-slate-200 bg-slate-50">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-red-800">
-              Are you sure you want to logout?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-700">
-              Logging out will reset all game progress. This action cannot be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="text-slate-700 hover:bg-slate-200">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleLogout}
-              className="bg-red-700 text-white hover:bg-red-800"
-            >
-              Logout
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+     
     </div>
   );
 };
